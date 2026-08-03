@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#7d2342">
+<title>KIARA ● Puskesmas Cakung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=9">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══════════ S1 · SPLASH ══════════ -->
+  <section class="screen on" id="s1">
+    <div class="splash">
+      <div class="sp-logo"><i data-lucide="baby"></i></div>
+      <h1>KIARA</h1>
+      <div class="sp-div"><i></i><i data-lucide="heart"></i><i></i></div>
+      <p>Kelas Ibu Hamil Digital<br>Puskesmas Kecamatan Cakung</p>
+      <div class="sp-load"><i></i></div>
+    </div>
+  </section>
+
+  <!-- ══════════ S2 · IDENTIFIKASI PASIEN ══════════ -->
+  <section class="screen scroll" id="s2">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="baby"></i></div>
+      <div class="ah-t"><strong>KIARA</strong><span>Edukasi Ibu Hamil • Puskesmas Cakung</span></div>
+    </header>
+    <div class="body">
+      <div class="pt">Data Ibu</div>
+      <div class="ps">Lengkapi data untuk memulai edukasi</div>
+
+      <form id="form-identifikasi" novalidate>
+        <div class="fg">
+          <label class="fl" for="in-nik">NIK <span class="req">*</span></label>
+          <input class="fi" id="in-nik" type="text" inputmode="numeric" maxlength="16"
+                 placeholder="16 digit sesuai KTP" autocomplete="off" required>
+          <div class="fh" id="hint-nik"><i data-lucide="info"></i><span>16 digit angka, tanpa spasi</span></div>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="in-nama">Nama Lengkap <span class="req">*</span></label>
+          <input class="fi" id="in-nama" type="text" placeholder="Nama sesuai KTP" autocomplete="off" required>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="in-hp">No. HP <span class="req">*</span></label>
+          <input class="fi" id="in-hp" type="tel" inputmode="numeric" maxlength="15"
+                 placeholder="Contoh: 081234567890" autocomplete="off" required>
+          <div class="fh" id="hint-hp"><i data-lucide="info"></i><span>Dimulai angka 0, tanpa spasi</span></div>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="in-alamat">Alamat <span class="req">*</span></label>
+          <textarea class="fi" id="in-alamat" rows="2"
+                    placeholder="Nama jalan, nomor rumah, RT/RW" autocomplete="off" required></textarea>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="in-kelurahan">Kelurahan <span class="req">*</span></label>
+          <select class="fi" id="in-kelurahan" required></select>
+        </div>
+
+        <div class="fg">
+          <label class="fl" for="in-puskesmas">Puskesmas <span class="req">*</span></label>
+          <select class="fi" id="in-puskesmas" required></select>
+        </div>
+
+        <!-- Field "Sesi ke-" sengaja tidak ditampilkan di sini.
+             Nomor sesi ditentukan sistem dari riwayat NIK dan baru
+             diperlihatkan di layar konfirmasi (S3). -->
+
+        <div class="alert bad" id="err-identifikasi" hidden></div>
+
+        <button class="btn p" type="submit" id="btn-submit-identifikasi">
+          <i data-lucide="arrow-right"></i>SUBMIT
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ══════════ S3 · KONFIRMASI SESI ══════════ -->
+  <section class="screen scroll" id="s3">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="user-check"></i></div>
+      <div class="ah-t"><strong>KIARA</strong><span>Verifikasi Data</span></div>
+    </header>
+    <div class="body">
+      <div class="pt">Konfirmasi Data</div>
+      <div class="ps">Pastikan data di bawah sudah benar</div>
+
+      <div class="idcard">
+        <div class="idrow">
+          <div class="av" id="k-avatar">-</div>
+          <div>
+            <strong id="k-nama">-</strong>
+            <span id="k-sub">-</span>
+          </div>
+        </div>
+        <div class="vbadge">
+          <span id="k-badge-label">TERDETEKSI</span>
+          <b id="k-badge-nomor">SESI KE-1</b>
+        </div>
+      </div>
+
+      <div class="hist" id="k-riwayat"></div>
+
+      <div class="infobox teal">
+        <b id="k-judul-sesi">Materi hari ini</b>
+        <div id="k-materi"></div>
+      </div>
+
+      <button class="btn p" id="btn-lanjut-konfirmasi">
+        <i data-lucide="check-circle-2"></i>Ya, Lanjutkan
+      </button>
+      <span class="tlink" id="btn-buka-koreksi">
+        <i data-lucide="user-x"></i><span>Bukan saya / data tidak sesuai</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════ S4 · PRE-TEST ══════════ -->
+  <section class="screen scroll" id="s4">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="clipboard-list"></i></div>
+      <div class="ah-t"><strong>PRE-TEST</strong><span id="pre-sub">Sesi 1</span></div>
+      <div class="ah-r" id="pre-count">1 / 10</div>
+    </header>
+    <div class="body">
+      <div class="pbar"><i id="pre-bar" style="width:10%"></i></div>
+      <div class="pmeta"><span id="pre-meta">Soal 1 dari 10</span><span id="pre-pct">10%</span></div>
+      <div id="pre-slot" class="qslot"></div>
+      <button class="btn d" id="btn-pre-lanjut" disabled>Lanjut</button>
+    </div>
+  </section>
+
+  <!-- ══════════ S5 · HASIL PRE-TEST ══════════ -->
+  <section class="screen scroll" id="s5">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="bar-chart-3"></i></div>
+      <div class="ah-t"><strong>HASIL PRE-TEST</strong><span id="hp-sub">Sesi 1</span></div>
+    </header>
+    <div class="body">
+      <div class="score">
+        <!-- Cincin skor digambar pakai SVG stroke, bukan conic-gradient,
+             supaya tepinya mulus dan persentasenya presisi. -->
+        <div class="ring" id="hp-ring">
+          <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ring-trek" cx="60" cy="60" r="52"/>
+            <circle class="ring-isi" id="hp-ring-isi" cx="60" cy="60" r="52"/>
+          </svg>
+          <div class="ring-teks">
+            <b id="hp-skor">0</b>
+            <span>SKOR</span>
+          </div>
+        </div>
+        <div class="score-note" id="hp-benar">0 dari 10 jawaban benar</div>
+      </div>
+      <div class="infobox rose">
+        <b>Tidak perlu khawatir, Bu</b>
+        Pre-test ini cuma untuk melihat pemahaman awal. Sekarang saatnya menyimak
+        materi — nanti akan ada post-test untuk mengukur perkembangannya.
+      </div>
+      <div class="seclabel">MATERI SESI INI</div>
+      <div class="mlist" id="hp-playlist"></div>
+      <button class="btn p" id="btn-mulai-materi">Mulai Materi</button>
+    </div>
+  </section>
+
+  <!-- ══════════ S6 · MATERI (video / dokumen) ══════════ -->
+  <section class="screen scroll" id="s6">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="play-circle"></i></div>
+      <div class="ah-t"><strong>MATERI</strong><span id="mt-sub">Sesi 1</span></div>
+      <div class="ah-r" id="mt-count">1 / 1</div>
+    </header>
+    <div class="body">
+
+      <!-- pemutar video -->
+      <div class="vid" id="mt-video">
+        <span class="vlab" id="mt-label">MATERI 1</span>
+        <div class="vshell" id="mt-shell"></div>
+        <button class="vplay" id="mt-play" aria-label="Putar video"><i data-lucide="play"></i></button>
+        <div class="vbar"><i id="mt-bar" style="width:0%"></i></div>
+      </div>
+
+      <!-- pembaca dokumen (komik / slide) -->
+      <div class="dok" id="mt-dok" hidden>
+        <div class="dok-head">
+          <i data-lucide="file-text"></i>
+          <span id="mt-dok-info">Dokumen</span>
+        </div>
+        <div class="dok-shell" id="mt-dok-shell"></div>
+        <a class="dok-open" id="mt-dok-open" href="#" target="_blank" rel="noopener">
+          <i data-lucide="external-link"></i>Buka di tab baru
+        </a>
+      </div>
+
+      <div class="vtitle" id="mt-title">-</div>
+      <div class="vtime" id="mt-time"></div>
+
+      <div class="infobox warn" id="mt-gate-note">
+        <i data-lucide="info"></i>
+        <div id="mt-gate-text">Simak sampai selesai untuk lanjut ke materi berikutnya</div>
+      </div>
+
+      <button class="btn o" id="btn-dok-selesai" hidden>
+        <i data-lucide="check"></i>Saya sudah membaca materi ini
+      </button>
+
+      <button class="btn d" id="btn-materi-lanjut" disabled>Materi Berikutnya</button>
+
+      <div class="seclabel">DAFTAR MATERI SESI INI</div>
+      <div class="mlist" id="mt-playlist"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ S7 · POST-TEST ══════════ -->
+  <section class="screen scroll" id="s7">
+    <header class="ah">
+      <div class="ah-i teal"><i data-lucide="clipboard-check"></i></div>
+      <div class="ah-t"><strong>POST-TEST</strong><span id="post-sub">Sesi 1</span></div>
+      <div class="ah-r teal" id="post-count">1 / 10</div>
+    </header>
+    <div class="body">
+      <div class="pbar"><i id="post-bar" class="teal" style="width:10%"></i></div>
+      <div class="pmeta"><span id="post-meta">Soal 1 dari 10</span><span id="post-pct">10%</span></div>
+      <div id="post-slot" class="qslot"></div>
+      <div id="post-feedback"></div>
+      <button class="btn d" id="btn-post-lanjut" disabled>Lanjut</button>
+    </div>
+  </section>
+
+  <!-- ══════════ S8 · HASIL AKHIR ══════════ -->
+  <section class="screen scroll" id="s8">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="award"></i></div>
+      <div class="ah-t"><strong>HASIL AKHIR</strong><span id="ha-sub">Sesi 1 selesai</span></div>
+    </header>
+    <div class="body">
+      <div class="center mb-sm">
+        <span class="badge ok" id="ha-badge"><i data-lucide="check-circle-2"></i><span>LULUS · KKM 75</span></span>
+      </div>
+
+      <div class="cmp">
+        <div class="pre"><b id="ha-pre">0</b><span>PRE-TEST</span></div>
+        <div class="dl"><b id="ha-delta">+0</b><span>NAIK</span></div>
+        <div class="post" id="ha-post-box"><b id="ha-post">0</b><span>POST-TEST</span></div>
+      </div>
+
+      <div class="datalist">
+        <div class="drow"><span>Nama</span><b id="ha-nama">-</b></div>
+        <div class="drow"><span>Sesi</span><b id="ha-sesi">-</b></div>
+        <div class="drow"><span>Kelurahan</span><b id="ha-kelurahan">-</b></div>
+        <div class="drow"><span>Puskesmas</span><b id="ha-puskesmas">-</b></div>
+        <div class="drow"><span>Tanggal</span><b id="ha-tanggal">-</b></div>
+      </div>
+
+      <div class="seclabel">PROGRESS SESI</div>
+      <div class="steps" id="ha-steps"></div>
+      <div class="center small muted mb-sm" id="ha-sisa"></div>
+
+      <div class="alert warn" id="ha-simpan-warn" hidden></div>
+
+      <button class="btn wa" id="btn-wa-hasil"><i data-lucide="send"></i>Kirim Hasil ke WhatsApp</button>
+      <button class="btn o mt-sm" id="btn-lihat-progress">Lihat Progress Saya</button>
+      <span class="tlink" id="btn-selesai">
+        <i data-lucide="log-out"></i><span>Selesai, tutup halaman</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════ S9 · PROGRESS 10 SESI ══════════ -->
+  <section class="screen scroll" id="s9">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="route"></i></div>
+      <div class="ah-t"><strong>PERJALANAN IBU</strong><span id="pg-nama">-</span></div>
+      <div class="ah-r" id="pg-count">0 / 10</div>
+    </header>
+    <div class="body">
+      <div class="pbar"><i id="pg-bar" style="width:0%"></i></div>
+      <div class="pmeta"><span id="pg-meta">0 sesi selesai</span><span id="pg-pct">0%</span></div>
+      <div class="hist mt-md" id="pg-list"></div>
+      <button class="btn o mt-md" id="btn-progress-kembali">Kembali</button>
+    </div>
+  </section>
+
+  <!-- ══════════ S10 · EDGE: SUDAH LULUS ══════════ -->
+  <section class="screen scroll" id="s10">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="user-check"></i></div>
+      <div class="ah-t"><strong>KIARA</strong><span>Verifikasi Data</span></div>
+    </header>
+    <div class="body">
+      <div class="edge">
+        <div class="edge-ic ok"><i data-lucide="check-circle-2"></i></div>
+        <div class="edge-t">Kelas Sudah Selesai</div>
+        <div class="edge-s">Ibu <b id="ll-nama">-</b> sudah menyelesaikan<br>seluruh <b id="ll-jumlah">-</b> sesi Kelas Ibu Hamil</div>
+      </div>
+      <div class="steps" id="ll-steps"></div>
+      <div class="datalist">
+        <div class="drow"><span>Total sesi</span><b id="ll-total">10 dari 10</b></div>
+        <div class="drow"><span>Rata-rata post-test</span><b class="c-ok" id="ll-rata">-</b></div>
+        <div class="drow"><span>Status</span><b class="c-ok">LULUS</b></div>
+      </div>
+      <button class="btn wa" id="btn-wa-rekap"><i data-lucide="send"></i>Kirim Rekap ke WhatsApp</button>
+      <span class="tlink" id="btn-lulus-bukan-saya">
+        <i data-lucide="user-x"></i><span>Bukan saya / data tidak sesuai</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════ S11 · EDGE: SESI DUPLIKAT ══════════ -->
+  <section class="screen scroll" id="s11">
+    <header class="ah">
+      <div class="ah-i warn"><i data-lucide="alert-triangle"></i></div>
+      <div class="ah-t"><strong>KIARA</strong><span>Verifikasi Data</span></div>
+    </header>
+    <div class="body">
+      <div class="edge">
+        <div class="edge-ic warn"><i data-lucide="calendar-check"></i></div>
+        <div class="edge-t">Sudah Tercatat Hari Ini</div>
+        <div class="edge-s" id="dp-sub">-</div>
+      </div>
+      <div class="datalist" id="dp-data">
+        <div class="drow"><span>Pre-Test</span><b id="dp-pre">-</b></div>
+        <div class="drow"><span>Post-Test</span><b id="dp-post">-</b></div>
+        <div class="drow"><span>Status</span><b id="dp-status">-</b></div>
+      </div>
+      <div class="center small muted mb-sm">
+        Sesi berikutnya bisa dilakukan pada<br><b class="c-rose">jadwal kunjungan berikutnya</b>
+      </div>
+      <button class="btn o" id="btn-dup-progress">Lihat Progress Saya</button>
+      <span class="tlink" id="btn-dup-awal">
+        <i data-lucide="rotate-ccw"></i><span>Kembali ke awal</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ══════════ S12 · EDGE: BELUM CAPAI KKM ══════════ -->
+  <section class="screen scroll" id="s12">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="award"></i></div>
+      <div class="ah-t"><strong>HASIL AKHIR</strong><span id="kk-sub">Sesi 1</span></div>
+    </header>
+    <div class="body">
+      <div class="center mb-sm">
+        <span class="badge no"><i data-lucide="alert-circle"></i><span id="kk-badge">BELUM CAPAI KKM 75</span></span>
+      </div>
+      <div class="cmp">
+        <div class="pre"><b id="kk-pre">0</b><span>PRE-TEST</span></div>
+        <div class="dl"><b id="kk-delta">+0</b><span>NAIK</span></div>
+        <div class="post warn"><b id="kk-post">0</b><span>POST-TEST</span></div>
+      </div>
+      <div class="infobox warn block">
+        <b>Sesi tetap tercatat</b>
+        <span id="kk-note">Kehadiran Ibu hari ini sudah masuk sebagai sesi.</span>
+        Ibu bisa menyimak ulang materi dan mencoba post-test lagi untuk memperkuat pemahaman.
+      </div>
+      <div class="alert warn" id="kk-simpan-warn" hidden></div>
+      <button class="btn o" id="btn-kk-tonton"><i data-lucide="rotate-ccw"></i>Simak Ulang Materi</button>
+      <button class="btn p mt-sm" id="btn-kk-ulang"><i data-lucide="repeat"></i>Ulangi Post-Test</button>
+
+      <!-- Tombol kirim WhatsApp sengaja TIDAK ada di layar ini.
+           Hasil di bawah KKM tidak dikirim ke bidan; yang dikirim hanya
+           hasil yang sudah mencapai KKM (dari layar S8). -->
+      <div class="center tiny muted mt-md" id="kk-catatan">
+        Hasil dikirim ke bidan setelah nilai Ibu mencapai KKM.
+        Kehadiran hari ini tetap tercatat.
+      </div>
+
+      <span class="tlink" id="btn-kk-selesai">
+        <i data-lucide="log-out"></i><span>Selesai, tutup halaman</span>
+      </span>
+    </div>
+  </section>
+
+  <!--
+    SERTIFIKAT KELULUSAN — DI HOLD
+    konsep KIARA.docx: "TERBIT SERTIFIKAT LULUS (Di hold dlu)"
+    Layar sertifikat sengaja tidak dibuat. Setelah 10 sesi, alur berhenti
+    di S10 (rekap) + kirim WhatsApp. Jangan bangun sampai ada instruksi baru.
+  -->
+
+</div>
+
+<!-- ══════════ MODAL RIWAYAT PERIKSA ══════════
+     Muncul setelah SUBMIT dan form lolos validasi, sebelum lookup NIK.
+     Sesuai konsep KIARA: "APAKAH SUDAH PERNAH PERIKSA HAMIL? YA, TIDAK"
+-->
+<div class="modal" id="modal-periksa" hidden>
+  <div class="modal-box">
+    <div class="modal-ic"><i data-lucide="stethoscope"></i></div>
+    <h2>Sudah Pernah Periksa Hamil?</h2>
+    <p>Jawaban Ibu dipakai untuk menentukan mulai dari sesi ke berapa.
+       Kalau sudah pernah tapi belum tercatat di sini, nanti bisa dikoreksi.</p>
+    <div class="modal-act">
+      <button class="btn o" id="btn-periksa-tidak">
+        <i data-lucide="circle-slash-2"></i>Belum Pernah
+      </button>
+      <button class="btn p" id="btn-periksa-ya">
+        <i data-lucide="check-circle-2"></i>Sudah Pernah
+      </button>
+    </div>
+    <span class="tlink" id="btn-periksa-batal">
+      <i data-lucide="pencil-line"></i><span>Kembali ubah data</span>
+    </span>
+  </div>
+</div>
+
+<!-- ══════════ S3a · MODAL KOREKSI MANUAL ══════════ -->
+<div class="modal" id="modal-koreksi" hidden>
+  <div class="modal-box">
+    <button class="modal-x" id="btn-koreksi-tutup" aria-label="Tutup"><i data-lucide="x"></i></button>
+    <div class="modal-ic"><i data-lucide="pencil"></i></div>
+    <h2>Koreksi Sesi</h2>
+    <p>Kalau Ibu sudah pernah ikut Kelas Ibu Hamil sebelumnya di tempat lain,
+       isi sesi ke berapa sekarang. Data ini akan ditandai untuk diverifikasi bidan.</p>
+    <div class="fg">
+      <label class="fl" for="in-koreksi">Sesi ke-</label>
+      <select class="fi" id="in-koreksi"></select>
+      <div class="fh" id="hint-koreksi">
+        <i data-lucide="info"></i><span>Pilih sesi yang sesuai riwayat Ibu</span>
+      </div>
+    </div>
+    <div class="modal-act">
+      <button class="btn o" id="btn-koreksi-batal">
+        <i data-lucide="x"></i>Batal
+      </button>
+      <button class="btn p" id="btn-koreksi-simpan">
+        <i data-lucide="check"></i>Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ OVERLAY LOADING ══════════ -->
+<div class="loading" id="loading" hidden>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <span id="loading-text">Mencari riwayat Ibu...</span>
+  </div>
+</div>
+
+<script src="config.js?v=5"></script>
+<script src="content.js?v=5"></script>
+<script src="visit-tracker.js?v=4"></script>
+<script src="app.js?v=14"></script>
+</body>
+</html>

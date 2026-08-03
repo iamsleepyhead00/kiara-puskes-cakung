@@ -1,0 +1,24 @@
+# KIARA — file yang tidak boleh masuk repo
+# Alasan lengkap + hitungan bandwidth: lihat BATAS-MEDIA-GITHUB.md
+
+# Video. Dua file (Maternal 1 & 2) bahkan ditolak GitHub karena >100 MB.
+# Semua video dihost di YouTube unlisted / Cloudflare R2, bukan di repo.
+media/*.mp4
+media/**/*.mp4
+media/*.mov
+media/**/*.mov
+media/*.mkv
+media/**/*.mkv
+
+# Buku rujukan internal 13,6 MB — bukan materi yang ditampilkan ke pasien
+media/**/Buku*Fasilitator*.pdf
+
+# Sisa hasil ekstrak / arsip
+*.zip
+
+# Slide sumber. Yang dipakai aplikasi adalah hasil konversi PDF di media/slide/
+media/**/*.pptx
+
+# Sistem
+.DS_Store
+Thumbs.db
