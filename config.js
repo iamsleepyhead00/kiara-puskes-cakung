@@ -46,9 +46,14 @@ window.KIARA_CONFIG = {
   ],
 
   // ── BACKEND ────────────────────────────────────────────────
-  // URL Web App Apps Script. Isi setelah deploy gas/Code.gs.
+  // URL Web App Apps Script — spreadsheet "Rekap Hasil Kiara 2026", tab KIARA.
   // Deploy sebagai: Execute as = Me, Who has access = Anyone.
-  SHEETS_ENDPOINT: '',
+  //
+  // ⚠️ URL ini memberi akses TULIS ke sheet bagi siapa pun yang memilikinya.
+  //    Karena aplikasinya statis, URL ini selalu terlihat di DevTools —
+  //    tidak bisa disembunyikan. Yang bisa dikendalikan cuma seberapa mudah
+  //    URL-nya ditemukan. Lihat catatan keamanan di README.
+  SHEETS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxD6D_gZrSOFR0kujsE0DdkHGpLz9qkGlJKNtKl-YiyaIq7fadoEAXLBqHGm4yVfxFP/exec',
 
   // ── WHATSAPP ───────────────────────────────────────────────
   // Sumber: konsep KIARA.docx. Nomor ini BERBEDA dari FORMAT KIARA
@@ -122,11 +127,12 @@ window.KIARA_CONFIG = {
   MIN_TONTON_PERSEN: 0.9,
 
   // ── DEV ────────────────────────────────────────────────────
-  // true = jalan tanpa backend, riwayat disimpan di localStorage.
+  // true  = jalan tanpa backend, riwayat disimpan di localStorage HP
+  // false = tersambung ke Google Sheets lewat SHEETS_ENDPOINT
   //
-  // ⚠️ Sekarang true untuk preview. WAJIB false setelah SHEETS_ENDPOINT
-  //    diisi, kalau tidak data pasien hanya tersimpan di HP masing-masing.
-  OFFLINE_MODE: true,
+  // Sudah false — endpoint aktif dan sudah diuji tulis-baca.
+  // Kembalikan ke true kalau perlu uji alur tanpa mengotori sheet.
+  OFFLINE_MODE: false,
 
   SPLASH_DURATION_MS: 2500
 };
