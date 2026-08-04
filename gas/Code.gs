@@ -51,8 +51,17 @@ var K = {
 };
 var JML_KOLOM = 13;
 
-/* Nama sheet. Kosongkan untuk memakai sheet pertama apa pun namanya. */
-var NAMA_SHEET = '';
+/* Nama tab di spreadsheet "Rekap Hasil Kiara 2026".
+   Dipatok, bukan memakai "sheet pertama", supaya menambah tab REKAP atau
+   tab lain di sebelah kiri tidak membuat data masuk ke tab yang salah.
+   Kosongkan ('') kalau ingin kembali memakai sheet pertama. */
+var NAMA_SHEET = 'KIARA';
+
+/* Header yang diharapkan di baris 1, urut kolom A–M. */
+var HEADER_HARAPAN = [
+  'No', 'Date', 'Time', 'Nama', 'NIK', 'No WA', 'Alamat',
+  'Kelurahan', 'Puskesmas', 'Kunjungan ke-', 'Pre-Test', 'Post-Test', 'Status'
+];
 
 /* ══════════════════════════════════════════════════════════
    ENTRY POINT
@@ -87,14 +96,44 @@ function sheet() {
   return sh;
 }
 
-/** Jalankan sekali dari editor untuk memastikan header terbaca benar. */
+/** Samakan bentuk nama kolom: huruf kecil, buang spasi dan tanda baca. */
+function kunciHeader(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Pastikan baris 1 benar-benar 13 kolom yang diharapkan.
+ *
+ * Ini penting karena kalau ada kolom disisipkan atau digeser di sheet,
+ * tanpa pemeriksaan ini backend akan tetap menulis — masuk ke kolom yang
+ * salah dan datanya berantakan tanpa ada yang sadar. Lebih baik gagal
+ * dengan pesan jelas.
+ *
+ * @returns {string} '' kalau cocok, atau penjelasan ketidakcocokan
+ */
+function bedaHeader(sh) {
+  var ada = sh.getRange(1, 1, 1, JML_KOLOM).getValues()[0];
+  var salah = [];
+  for (var i = 0; i < JML_KOLOM; i++) {
+    if (kunciHeader(ada[i]) !== kunciHeader(HEADER_HARAPAN[i])) {
+      salah.push('kolom ' + String.fromCharCode(65 + i) +
+        ': harusnya "' + HEADER_HARAPAN[i] + '", terbaca "' + ada[i] + '"');
+    }
+  }
+  return salah.join('; ');
+}
+
+/** Jalankan sekali dari editor untuk memastikan sheet dan header sudah benar. */
 function cekSheet() {
   var sh = sheet();
   var header = sh.getRange(1, 1, 1, JML_KOLOM).getValues()[0];
+  var beda = bedaHeader(sh);
   SpreadsheetApp.getUi().alert(
-    'Sheet: ' + sh.getName() +
+    'Spreadsheet : ' + SpreadsheetApp.getActiveSpreadsheet().getName() +
+    '\nTab         : ' + sh.getName() +
     '\nBaris terisi: ' + sh.getLastRow() +
-    '\n\nHeader terbaca:\n' + header.join(' | ')
+    '\n\nHeader terbaca:\n' + header.join(' | ') +
+    '\n\n' + (beda ? 'TIDAK COCOK →\n' + beda.split('; ').join('\n') : 'Header sudah cocok.')
   );
 }
 
@@ -176,6 +215,11 @@ function handleSave(p) {
 
   try {
     var sh = sheet();
+
+    // Jangan pernah menulis kalau susunan kolom tidak sesuai.
+    var beda = bedaHeader(sh);
+    if (beda) return { ok: false, error: 'Susunan kolom sheet tidak sesuai — ' + beda };
+
     var data = ambilData(sh);
 
     var kkm = Number(p.kkm) || 75;
@@ -243,6 +287,95 @@ function nomorBerikut(sh) {
     if (!isNaN(n) && n > maks) maks = n;
   }
   return maks + 1;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FUNGSI UJI — jalankan dari editor Apps Script
+
+   Dipakai untuk memastikan sheet benar-benar bisa ditulis SEBELUM
+   aplikasi disambungkan. Kalau ujiTulis() berhasil, berarti nama tab,
+   susunan kolom, dan izin sudah benar — sisa masalah kalau ada pasti
+   di sisi aplikasi, bukan di sheet.
+   ══════════════════════════════════════════════════════════ */
+
+var NIK_UJI = '9999999999999999';
+var NAMA_UJI = 'UJI COBA - HAPUS';
+
+/**
+ * Tulis satu baris uji lewat jalur yang sama dengan aplikasi.
+ * Sengaja memanggil handleSave(), bukan appendRow langsung, supaya
+ * validasi header dan penguncian ikut teruji.
+ */
+function ujiTulis() {
+  var hasil = handleSave({
+    nik: NIK_UJI,
+    nama: NAMA_UJI,
+    noHp: '081200000000',
+    alamat: 'Alamat uji coba',
+    kelurahan: 'Pulo Gebang',
+    puskesmas: 'Puskesmas Cakung',
+    kunjunganKe: 1,
+    skorPre: 40,
+    skorPost: 90,
+    kkm: 75,
+    totalSesi: 4,
+    allowUpdate: '1'
+  });
+
+  var sh = sheet();
+  SpreadsheetApp.getUi().alert(
+    hasil.ok
+      ? 'BERHASIL — satu baris uji ditulis.\n\n' +
+        'Tab          : ' + sh.getName() + '\n' +
+        'Baris terisi : ' + sh.getLastRow() + '\n' +
+        'Status       : ' + hasil.statusKkm + '\n' +
+        'Rata-rata    : ' + hasil.rataPost + '\n\n' +
+        'Periksa baris terakhir. Pastikan:\n' +
+        '  • NIK utuh 16 digit (bukan 9,99999E+15)\n' +
+        '  • No WA masih diawali 0\n' +
+        '  • Tanggal berformat dd-mm-yyyy\n\n' +
+        'Setelah itu jalankan hapusUji() untuk membersihkan.'
+      : 'GAGAL — ' + hasil.error
+  );
+}
+
+/** Uji baca: pastikan lookup menemukan baris uji dan menghitung sesi berikutnya. */
+function ujiBaca() {
+  var r = handleLookup({ nik: NIK_UJI, totalSesi: 4 });
+  SpreadsheetApp.getUi().alert(
+    'Hasil lookup NIK uji:\n\n' +
+    'Ditemukan     : ' + (r.baru ? 'tidak (dianggap pasien baru)' : 'ya') + '\n' +
+    'Nama          : ' + (r.nama || '-') + '\n' +
+    'Sesi terakhir : ' + (r.kunjunganTerakhir || 0) + '\n' +
+    'Tgl terakhir  : ' + (r.tglKunjunganTerakhir || '-') + '\n' +
+    'Jumlah baris  : ' + ((r.riwayat || []).length) + '\n\n' +
+    (r.baru
+      ? 'Belum ada baris uji. Jalankan ujiTulis() dulu.'
+      : 'Sesi berikutnya akan terdeteksi: ' + (r.kunjunganTerakhir + 1))
+  );
+}
+
+/** Hapus semua baris uji. Aman dijalankan berkali-kali. */
+function hapusUji() {
+  var sh = sheet();
+  var data = ambilData(sh);
+  var dihapus = 0;
+
+  // Dari bawah ke atas supaya nomor baris tidak bergeser saat dihapus.
+  for (var i = data.length - 1; i >= 0; i--) {
+    var cocokNik = bersihNik(data[i][K.NIK - 1]) === NIK_UJI;
+    var cocokNama = String(data[i][K.NAMA - 1]).trim().toUpperCase() === NAMA_UJI;
+    if (cocokNik || cocokNama) {
+      sh.deleteRow(i + 2);
+      dihapus++;
+    }
+  }
+
+  SpreadsheetApp.getUi().alert(
+    dihapus
+      ? dihapus + ' baris uji dihapus. Baris terisi sekarang: ' + sh.getLastRow()
+      : 'Tidak ada baris uji yang ditemukan.'
+  );
 }
 
 /* ══════════════════════════════════════════════════════════
