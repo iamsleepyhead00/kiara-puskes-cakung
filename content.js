@@ -190,8 +190,20 @@ window.KIARA_CONTENT = {
      Jumlah materi per sesi TIDAK selalu 2 — beda dari FORMAT KIARA.
      `setSoal` merujuk ke bank soal (1–4) dari buku fasilitator.
 
-     ⚠️ Pemetaan sesi → set soal disusun berdasarkan kecocokan topik,
-        BUKAN dari instruksi puskesmas. Perlu dikonfirmasi.
+     PEMBAGIAN SOAL — puskesmas konfirmasi tiap sesi hanya 5 soal, dan
+     lulus = 4 dari 5 benar (KKM 80). Bank soal buku berisi 10 soal per
+     pertemuan, jadi setiap set dibelah dua:
+
+       `bagianSoal: 1` → soal ke-1 sampai ke-5
+       `bagianSoal: 2` → soal ke-6 sampai ke-10
+
+     Dua sesi yang memakai set yang sama diberi bagian berbeda supaya
+     tidak ada soal yang terulang di sesi berurutan.
+
+     ⚠️ Pemetaan sesi → set soal DAN pembelahan 10 soal jadi dua bagian
+        disusun berdasarkan urutan di buku, BUKAN dari instruksi
+        puskesmas. Perlu dikonfirmasi: apakah 5 soal yang dipakai memang
+        5 pertama / 5 terakhir, atau puskesmas punya pilihan sendiri.
 
      Kalau menambah / mengurangi sesi di sini, sesuaikan juga
      TOTAL_SESI di config.js.
@@ -201,7 +213,7 @@ window.KIARA_CONTENT = {
       ke: 1,
       judul: 'Kehamilan yang Sehat',
       label: 'Buku KIA & Gizi 1000 HPK',
-      setSoal: 1,
+      setSoal: 1, bagianSoal: 1,
       materi: ['VID_MATERNAL_1', 'VID_GIZI_1000HPK'],
       pokok: ['Tentang Buku KIA dan manfaatnya', 'Gizi dalam 1000 HPK',
               'Pengertian kehamilan', 'Keluhan umum saat hamil dan cara mengatasinya',
@@ -211,7 +223,7 @@ window.KIARA_CONTENT = {
       ke: 2,
       judul: 'Pemeriksaan Kehamilan & Gizi',
       label: 'Pemeriksaan ANC, KEK & TTD',
-      setSoal: 1,
+      setSoal: 1, bagianSoal: 2,
       materi: ['VID_MATERNAL_2', 'VID_KEK', 'VID_GIZI_BUMIL'],
       pokok: ['Jenis pelayanan pemeriksaan kehamilan dan manfaat setiap kunjungan',
               'Ibu hamil KEK', 'Penambahan BB sesuai IMT pra hamil',
@@ -222,7 +234,7 @@ window.KIARA_CONTENT = {
       ke: 3,
       judul: 'Perawatan Diri Selama Kehamilan',
       label: 'Perawatan diri & mitos',
-      setSoal: 3,
+      setSoal: 3, bagianSoal: 1,
       materi: ['VID_MITOS_TTD'],   // wilayah MMS: kosong, tidak ada padanan videonya
       pokok: ['Perawatan sehari-hari ibu hamil',
               'Hal-hal yang tidak boleh dilakukan selama kehamilan',
@@ -233,7 +245,7 @@ window.KIARA_CONTENT = {
       ke: 4,
       judul: 'Tanda Bahaya & Faktor Risiko',
       label: 'Tanda bahaya & penyakit penyerta',
-      setSoal: 3,
+      setSoal: 3, bagianSoal: 2,
       materi: [],   // kosong - materi PDF ditahan, belum ada pengganti
       pokok: ['Tanda bahaya kehamilan', 'Lembar pemantauan ibu hamil', 'Kesehatan jiwa',
               'Diabetes gestasional, obesitas, malaria',
@@ -253,13 +265,21 @@ window.KIARA_CONTENT = {
      Video yang sudah ada di media/ tapi baru terpakai di sesi ditahan:
        VID_IMD (18 MB), VID_ASI_EKSKLUSIF (30 MB), VID_PELEKATAN (59 MB)
      File-nya sengaja tidak dihapus karena akan dipakai lagi.
+
+     ⚠️ SOAL BELUM CUKUP UNTUK SESI INI. Dengan aturan 5 soal per sesi,
+        satu set 10 soal hanya cukup untuk DUA sesi. Tapi peta topik
+        menaruh 4 sesi (5, 6, 7, 8) di set 2, dan 2 sesi (9, 10) di set 4.
+        Artinya sesi 5 & 7 akan memakai soal yang sama, begitu juga 6 & 8.
+        `bagianSoal` di bawah sudah diisi supaya tidak error, tapi ini
+        HARUS dibereskan sebelum sesi 5–10 dihidupkan — entah puskesmas
+        menambah bank soal, atau peta sesi→set diubah.
      ══════════════════════════════════════════════════════════ */
   sesiDitahan: [
     {
       ke: 5,
       judul: 'Persiapan Persalinan & IMD',
       label: 'Persalinan & IMD',
-      setSoal: 2,
+      setSoal: 2, bagianSoal: 1,
       materi: ['VID_IMD'],
       pokok: ['Persiapan persalinan', 'Tanda persalinan', 'Proses persalinan',
               'Inisiasi Menyusu Dini (IMD)']
@@ -268,7 +288,7 @@ window.KIARA_CONTENT = {
       ke: 6,
       judul: 'Nifas & Mitos Masa Nifas',
       label: 'Nifas & mitos nifas',
-      setSoal: 2,
+      setSoal: 2, bagianSoal: 2,
       materi: [],   // kosong - materi PDF ditahan, belum ada pengganti
       pokok: ['Tanda bahaya setelah melahirkan', 'Pelayanan nifas',
               'Menjaga kesehatan ibu dan bayi pada masa nifas',
@@ -278,7 +298,7 @@ window.KIARA_CONTENT = {
       ke: 7,
       judul: 'Menjaga Ibu Nifas & Bayi Sehat',
       label: 'Ibu nifas & bayi sehat',
-      setSoal: 2,
+      setSoal: 2, bagianSoal: 1,   // ⚠️ sama dengan sesi 5
       materi: [],   // kosong - materi PDF ditahan, belum ada pengganti
       pokok: ['Menjaga ibu bersalin, nifas, dan bayi sehat',
               'Tanda bahaya pada ibu nifas',
@@ -289,7 +309,7 @@ window.KIARA_CONTENT = {
       ke: 8,
       judul: 'KB Pasca Persalinan',
       label: 'KB pasca persalinan',
-      setSoal: 2,
+      setSoal: 2, bagianSoal: 2,   // ⚠️ sama dengan sesi 6
       materi: [],   // kosong - materi PDF ditahan, belum ada pengganti
       pokok: ['KB pasca persalinan', 'Metode Amenorhae Laktasi (MAL)']
     },
@@ -297,7 +317,7 @@ window.KIARA_CONTENT = {
       ke: 9,
       judul: 'Bayi Baru Lahir & ASI Eksklusif',
       label: 'Bayi baru lahir & ASI',
-      setSoal: 4,
+      setSoal: 4, bagianSoal: 1,
       materi: ['VID_ASI_EKSKLUSIF', 'VID_PELEKATAN'],
       pokok: ['Tanda bayi lahir sehat', 'Tanda bahaya bayi baru lahir', 'Cacat bawaan',
               'Perawatan bayi baru lahir dan pelayanan neonatus',
@@ -309,7 +329,7 @@ window.KIARA_CONTENT = {
       ke: 10,
       judul: 'Imunisasi & Perawatan Bayi',
       label: 'Imunisasi & perawatan bayi',
-      setSoal: 4,
+      setSoal: 4, bagianSoal: 2,
       materi: [],   // kosong - materi PDF ditahan, belum ada pengganti
       pokok: ['Imunisasi', 'Menjaga bayi tetap sehat',
               'Hal-hal yang harus dihindari dalam merawat bayi baru lahir',
@@ -325,8 +345,13 @@ window.KIARA_CONTENT = {
 
      Format berubah total dari FORMAT KIARA:
        • bukan pilihan ganda A/B/C, tapi Benar/Salah
-       • 4 set × 10 soal = 40 soal (dulu 5 soal)
-       • 10 poin per soal
+       • bank soal 4 set × 10 soal = 40 soal
+
+     YANG DIPAKAI PER SESI HANYA 5 SOAL. Puskesmas konfirmasi (4 Agu)
+     tiap sesi berisi pre-test dan post-test 5 soal, lulus 4 dari 5.
+     Jadi tiap set 10 soal dibelah dua lewat `bagianSoal` di peta sesi:
+     bagian 1 = soal 1–5, bagian 2 = soal 6–10. Dengan 5 soal, satu soal
+     bernilai 20 poin dan skor hanya 0/20/40/60/80/100.
 
      kunci: true = Benar, false = Salah
      varian: soal yang berbeda antara wilayah TTD dan MMS

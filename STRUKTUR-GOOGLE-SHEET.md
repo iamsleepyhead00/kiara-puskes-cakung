@@ -60,13 +60,23 @@ lapisan pengaman kalau ada yang mengisi manual.
 
 ### Nilai yang mungkin di Pre-Test dan Post-Test
 
-Satu set soal berisi 10 pertanyaan Benar/Salah, masing-masing bernilai 10 poin.
-Jadi nilainya **hanya kelipatan 10**: `0, 10, 20, … 100`. Tidak akan ada nilai
-seperti 75 atau 83.
+Tiap sesi memakai **5 pertanyaan** Benar/Salah, masing-masing bernilai 20 poin.
+Jadi nilainya **hanya kelipatan 20**: `0, 20, 40, 60, 80, 100`. Tidak akan ada
+nilai seperti 70, 75, atau 83.
 
-Dengan KKM 75, `Status` menjadi `LULUS` mulai dari nilai **80**, yang berarti
-minimal **8 dari 10 jawaban benar**. Kalau puskesmas sebenarnya menghendaki
-7 dari 10 sudah cukup, KKM harus diubah ke 70 di `config.js`.
+`Status` menjadi `LULUS` mulai dari nilai **80**, yang berarti minimal
+**4 dari 5 jawaban benar** — sesuai konfirmasi puskesmas (4 Agu). Nilainya
+diatur di `KKM` pada `config.js`, dan endpoint punya salinannya di
+`BATAS.KKM_DEFAULT` pada `gas/Code.gs`. Kalau diubah, ubah keduanya.
+
+| Benar | Skor | Status |
+|---|---|---|
+| 5 dari 5 | 100 | LULUS |
+| 4 dari 5 | 80 | LULUS |
+| 3 dari 5 | 60 | BELUM |
+| 2 dari 5 | 40 | BELUM |
+| 1 dari 5 | 20 | BELUM |
+| 0 dari 5 | 0 | BELUM |
 
 ---
 
@@ -312,10 +322,10 @@ Aturan validasinya:
 | Kelurahan | harus salah satu dari 8 kelurahan resmi |
 | Puskesmas | harus salah satu dari 9 puskesmas/pustu resmi |
 | Kunjungan ke- | bilangan bulat 1–10 |
-| Pre-Test / Post-Test | bilangan bulat 0–100 **dan kelipatan 10** |
+| Pre-Test / Post-Test | bilangan bulat 0–100 **dan kelipatan 20** |
 
-Skor wajib kelipatan 10 karena setiap set berisi 10 soal Benar/Salah — nilai
-seperti 77 tidak mungkin datang dari aplikasi.
+Skor wajib kelipatan 20 karena tiap sesi berisi 5 soal Benar/Salah — nilai
+seperti 70 atau 77 tidak mungkin datang dari aplikasi.
 
 **Injeksi formula Sheets.** Ini risiko yang nyata justru karena bidan membuka
 spreadsheet-nya. Sel yang isinya diawali `=` `+` `-` `@` akan dieksekusi Sheets

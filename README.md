@@ -9,7 +9,7 @@ ruang tunggu, aplikasi mengenali NIK dan otomatis tahu ini sesi ke berapa dari 1
 |---|---|
 | `konsep KIARA.docx` (2 Agu 2026) | **acuan aktif** — 10 sesi, form, nomor WA |
 | `FORMAT KIARA.docx` (31 Jul 2026) | sudah digantikan, jangan dipakai lagi |
-| Buku Pegangan Fasilitator Kelas Ibu Hamil 2025, hal. 169–172 | bank soal (40 soal Benar/Salah) |
+| Buku Pegangan Fasilitator Kelas Ibu Hamil 2025, hal. 169–172 | bank soal (40 soal Benar/Salah, dipakai 5 per sesi) |
 | `MATERI 1-10 KIARA.zip` | 10 slide deck per sesi + buku fasilitator |
 | `drive-download-...zip` | 15 mp4 + 7 PDF komik, terbagi wilayah TTD & MMS |
 
@@ -38,10 +38,10 @@ S1 Splash
          Alamat, Kelurahan,           ├→ submit hari ini ──→ S11 Duplikat
          Puskesmas)                   └→ S3 Konfirmasi Sesi
                                            (S3a Koreksi Manual)
-                                             └→ S4 Pre-Test (10 soal B/S)
+                                             └→ S4 Pre-Test (5 soal B/S)
                                                 └→ S5 Hasil Pre-Test
                                                    └→ S6 Materi (n item, tiap item bergate)
-                                                      └→ S7 Post-Test (10 soal + feedback)
+                                                      └→ S7 Post-Test (5 soal + feedback)
                                                          └→ simpan ke Sheets
                                                             ├→ ≥ KKM → S8 Hasil Akhir
                                                             └→ < KKM → S12 Belum KKM
@@ -225,7 +225,7 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 | 2 | **File media** | `media/` | Slide masih `.pptx` (perlu PDF), video perlu dipindah ke YouTube/R2. `PLACEHOLDER_MODE` masih `true`. |
 | 3 | **Kunci jawaban yang terlihat keliru** | `content.js` → `perluKonfirmasi` | Dua soal, lihat bawah. |
 | 4 | **Pemetaan sesi → set soal** | `content.js` → `sesi[].setSoal` | Buku hanya punya 4 set untuk 10 sesi. Pemetaan sekarang disusun sendiri. |
-| 5 | **Nilai KKM** | `config.js` → `KKM` | 10 soal × 10 poin, jadi skor hanya 0/10/…/100. KKM 75 berarti lulus = **8 dari 10**. Kalau maunya 7 dari 10, ubah ke 70. |
+| 5 | **5 soal mana dari 10 di buku** | `content.js` → `sesi[].bagianSoal` | Puskesmas menetapkan 5 soal per sesi, buku punya 10 per pertemuan. Sekarang dibelah dua (soal 1–5 dan 6–10) menurut urutan buku. Perlu dipastikan puskesmas tidak punya pilihan sendiri. |
 | 6 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
 | 7 | `OFFLINE_MODE` | `config.js` | Masih `true` untuk preview. Data pasien belum masuk ke bidan. |
 

@@ -123,12 +123,26 @@
     return sesiData(ke).materi.map(resolveMateri).filter(Boolean);
   }
 
-  /** Bank soal untuk satu sesi, varian TTD/MMS sudah dipilih. */
+  /**
+   * Bank soal untuk satu sesi, varian TTD/MMS sudah dipilih.
+   *
+   * Puskesmas menetapkan 5 soal per sesi, sementara satu pertemuan di buku
+   * fasilitator berisi 10 soal. Jadi set dibelah: `bagianSoal: 1` mengambil
+   * soal 1–5, `bagianSoal: 2` mengambil soal 6–10.
+   *
+   * Kalau `bagianSoal` tidak diisi, ambil SOAL_PER_SESI pertama — jangan
+   * kirim 10 soal, karena skornya jadi kelipatan 10 dan ditolak endpoint.
+   */
   function soalSesi(ke) {
-    const nomorSet = sesiData(ke).setSoal;
-    const set = CONTENT.setSoal[nomorSet];
+    const data = sesiData(ke);
+    const set = CONTENT.setSoal[data.setSoal];
     if (!set) return [];
-    return set.soal.map((s) => {
+
+    const n = CFG.SOAL_PER_SESI;
+    const bagian = Number(data.bagianSoal) || 1;
+    const mulai = (bagian - 1) * n;
+
+    return set.soal.slice(mulai, mulai + n).map((s) => {
       if (s.varian) {
         const v = s.varian[wilayah()] || s.varian.TTD;
         return { pertanyaan: v.pertanyaan, kunci: v.kunci, perluKonfirmasi: v.perluKonfirmasi };
@@ -138,8 +152,13 @@
   }
 
   function namaSet(ke) {
-    const set = CONTENT.setSoal[sesiData(ke).setSoal];
-    return set ? set.nama : '-';
+    const data = sesiData(ke);
+    const set = CONTENT.setSoal[data.setSoal];
+    if (!set) return '-';
+    // Sebut bagiannya juga, supaya bidan bisa mencocokkan ke soal di buku.
+    const bagian = Number(data.bagianSoal) || 1;
+    const n = CFG.SOAL_PER_SESI;
+    return set.nama + ' · soal ' + ((bagian - 1) * n + 1) + '–' + (bagian * n);
   }
 
   function hitungSkor(jawaban, soal) {

@@ -62,13 +62,20 @@ window.KIARA_CONFIG = {
   ENABLE_WA_BUTTON: true,
 
   // ── SCORING ────────────────────────────────────────────────
-  // Soal resmi: 10 soal Benar/Salah per set, jadi 10 poin per soal.
-  // Skor yang mungkin: 0, 10, 20, ... 100.
+  // Puskesmas konfirmasi (4 Agu): tiap sesi ada pre-test dan post-test
+  // berisi 5 soal, dan lulus = 4 dari 5 benar.
   //
-  // ⚠️ KKM 75 masih asumsi. Dengan 10 soal, KKM 75 berarti lulus =
-  //    minimal 8 dari 10 benar. Kalau puskesmas maunya 7 dari 10,
-  //    KKM harus diubah ke 70.
-  KKM: 75,
+  // Bank soal buku fasilitator berisi 10 soal per pertemuan, jadi setiap
+  // set dibelah dua. Lihat `bagianSoal` di content.js.
+  SOAL_PER_SESI: 5,
+
+  // 5 soal → 20 poin per soal. Skor yang mungkin: 0, 20, 40, 60, 80, 100.
+  // 4 dari 5 benar = 80, jadi KKM 80.
+  //
+  // Kalau angka ini diubah, sesuaikan juga BATAS.KKM_DEFAULT dan
+  // BATAS.POIN_PER_SOAL di gas/Code.gs — endpoint menolak skor yang
+  // bukan kelipatan POIN_PER_SOAL.
+  KKM: 80,
 
   // Jumlah sesi yang AKTIF dipakai.
   //

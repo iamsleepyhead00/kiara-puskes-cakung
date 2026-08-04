@@ -93,9 +93,10 @@ var HEADER_HARAPAN = [
 var BATAS = {
   NAMA_MIN: 3,      NAMA_MAKS: 80,
   ALAMAT_MIN: 5,    ALAMAT_MAKS: 200,
-  KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 75,
+  // 5 soal per sesi, lulus 4 dari 5 → KKM 80. Harus sama dengan KKM di config.js.
+  KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 80,
   SESI_MAKS: 10,    SESI_DEFAULT: 4,
-  POIN_PER_SOAL: 10,                  // skor selalu kelipatan 10
+  POIN_PER_SOAL: 20,                  // 5 soal → skor selalu kelipatan 20
   SIMPAN_PER_JENDELA: 40,             // kapasitas nyata ~40 pasien/hari
   JENDELA_MENIT: 10
 };
@@ -189,8 +190,9 @@ function validasiSimpan(p) {
     return 'Kunjungan ke- harus 1–' + BATAS.SESI_MAKS;
   }
 
-  // Soal Benar/Salah 10 butir × 10 poin, jadi skor selalu kelipatan 10.
-  // Nilai seperti 77 tidak mungkin berasal dari aplikasi.
+  // Soal Benar/Salah 5 butir × 20 poin, jadi skor selalu kelipatan 20:
+  // 0, 20, 40, 60, 80, 100. Nilai seperti 70 atau 77 tidak mungkin
+  // berasal dari aplikasi.
   var skor = [['Pre-Test', p.skorPre], ['Post-Test', p.skorPost]];
   for (var i = 0; i < skor.length; i++) {
     var v = Number(skor[i][1] == null || skor[i][1] === '' ? 0 : skor[i][1]);
@@ -240,7 +242,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 4, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 5, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
@@ -499,8 +501,8 @@ function ujiTulis() {
     puskesmas: 'Puskesmas Cakung',
     kunjunganKe: 1,
     skorPre: 40,
-    skorPost: 90,
-    kkm: 75,
+    skorPost: 80,   // kelipatan 20, dan >= KKM 80 supaya statusnya LULUS
+    kkm: 80,
     totalSesi: 4,
     allowUpdate: '1'
   });
@@ -549,7 +551,7 @@ function ujiValidasi() {
     nik: NIK_UJI, nama: NAMA_UJI, noHp: '081200000000',
     alamat: 'Alamat uji coba', kelurahan: 'Pulo Gebang',
     puskesmas: 'Puskesmas Cakung', kunjunganKe: 1,
-    skorPre: 40, skorPost: 90
+    skorPre: 40, skorPost: 80
   };
 
   function dengan(ubah) {
@@ -573,7 +575,8 @@ function ujiValidasi() {
     ['Puskesmas karangan',    dengan({ puskesmas: 'Pustu Antah Berantah' }), true],
     ['Kunjungan 0',           dengan({ kunjunganKe: 0 }),           true],
     ['Kunjungan 99',          dengan({ kunjunganKe: 99 }),          true],
-    ['Skor 77 (bukan x10)',   dengan({ skorPost: 77 }),             true],
+    ['Skor 77 (bukan x20)',   dengan({ skorPost: 77 }),             true],
+    ['Skor 70 (bukan x20)',   dengan({ skorPost: 70 }),             true],
     ['Skor 120',              dengan({ skorPost: 120 }),            true],
     ['Payload asli',          dengan({}),                           false]
   ];
