@@ -53,28 +53,45 @@ Sertifikat kelulusan **tidak ada** — lihat bagian "Yang Di-Hold".
 
 ---
 
-## Peta 10 Sesi
+## Peta Kunjungan 1–4
 
-Jumlah materi per sesi **berbeda-beda** (1 sampai 6 item), tidak lagi selalu 2 video.
+Sumber: folder **DATA BASE VIDEO** dari puskesmas (5 Agustus 2026). Prefiks
+`K.1`–`K.4` pada nama berkas = kunjungan 1–4.
 
-| Sesi | Topik | Materi | Set Soal |
+Tiap kunjungan berisi **dua topik**, masing-masing satu video dan satu set 5 soal.
+Kedua set digabung jadi **satu** pre-test dan **satu** post-test berisi 10 soal —
+supaya struktur 13 kolom sheet tetap utuh (satu baris per kunjungan, satu skorPre,
+satu skorPost).
+
+| Kunj. | Topik | Video | Soal |
 |---|---|---|---|
-| 1 | Kehamilan yang Sehat | slide + 2 video | Pertemuan I |
-| 2 | Pemeriksaan Kehamilan & Gizi | slide + 3 video (+2 komik di MMS) | Pertemuan I |
-| 3 | Perawatan Diri Selama Kehamilan | slide + video Mitos TTD* + komik | Pertemuan III |
-| 4 | Tanda Bahaya & Faktor Risiko | slide | Pertemuan III |
-| 5 | Persiapan Persalinan & IMD | slide + video IMD + komik IMD | Pertemuan II |
-| 6 | Nifas & Mitos Masa Nifas | slide | Pertemuan II |
-| 7 | Menjaga Ibu Nifas & Bayi Sehat | slide | Pertemuan II |
-| 8 | KB Pasca Persalinan | slide | Pertemuan II |
-| 9 | Bayi Baru Lahir & ASI Eksklusif | slide + 2 video | Pertemuan IV |
-| 10 | Imunisasi & Perawatan Bayi | slide | Pertemuan IV |
+| 1 | Tanda Kehamilan & Pemeriksaan | `K1-Tanda-Kehamilan.mp4` (9 MB) | 5 |
+| 1 | 1000 HPK | `K1-Gizi-1000-HPK.mp4` (51 MB) | 5 |
+| 2 | Gizi Ibu Hamil | `K2-Gizi-Ibu-Hamil.mp4` (68 MB) | 5 |
+| 2 | Ibu Hamil KEK | `K2-KEK.mp4` (42 MB) | 5 |
+| 3 | Perawatan Sehari-hari | `K3-Perawatan-Sehari-hari.mp4` (4 MB) | 5 |
+| 3 | Mitos dan Fakta | **belum ada** | 5 |
+| 4 | Hal yang Harus Dihindari | `K4-Hal-yang-Dihindari.mp4` (13 MB) | 5 |
+| 4 | Tanda Bahaya Kehamilan | **belum ada** | 5 |
 
-\* Video Mitos TTD tidak ada padanannya di paket MMS — sesi 3 wilayah MMS jadi tanpa video.
+Total media aktif **186 MB**, berkas terbesar 68 MB — semuanya di bawah batas
+100 MB/berkas GitHub.
 
-Buku fasilitator hanya menyediakan **4 set soal** untuk **10 sesi**, jadi ada set yang
-dipakai lebih dari sekali. Pemetaan di atas disusun berdasarkan kecocokan topik —
-belum dikonfirmasi puskesmas. Ubah di `content.js` → `sesi[].setSoal`.
+Skoring: 10 soal → 10 poin per soal, skor 0–100 kelipatan 10, **KKM 80 = 8 dari
+10 benar**.
+
+Berkas `SOAL PRETEST & POSTTEST IMUNISASI.docx` **tanpa prefiks K**, jadi belum
+jelas masuk kunjungan ke berapa. Soalnya sudah disiapkan di `setSoalDitahan`,
+belum aktif.
+
+### Sumber yang tidak lagi dipakai
+
+Bank soal Buku Pegangan Fasilitator (4 set × 10 soal) dan paket video TTD/MMS
+tidak dihapus, dipindah ke `setSoalDitahan` dan `materiDitahan` di `content.js`.
+Rujukan resmi kalau kunjungan 5+ butuh soal dan puskesmas belum mengirim.
+
+Wilayah TTD/MMS **tidak lagi memengaruhi materi** — paket baru hanya satu set.
+Masih memengaruhi satu kunci soal (K.1 no. 5, "semua ibu hamil dapat TTD").
 
 ---
 
@@ -87,8 +104,9 @@ cd dashboard\kiara-puskes-cakung
 python -m http.server 8000
 ```
 
-Buka `http://localhost:8000`. Untuk uji alur sesi 1 → 10 tanpa backend, `config.js`
-sudah disetel `OFFLINE_MODE: true`. Reset riwayat dari console: `KIARA_DEBUG.resetOffline()`.
+Buka `http://localhost:8000`. `OFFLINE_MODE` sekarang `false` — data masuk ke sheet
+sungguhan. Setel `true` kalau perlu uji alur tanpa mengotori sheet, lalu reset
+riwayat dari console: `KIARA_DEBUG.resetOffline()`.
 
 Cek pemetaan dari console: `KIARA_DEBUG.soalSesi(3)` dan `KIARA_DEBUG.materiSesi(3)`.
 
@@ -96,32 +114,35 @@ Cek pemetaan dari console: `KIARA_DEBUG.soalSesi(3)` dan `KIARA_DEBUG.materiSesi
 
 ## Menyiapkan Media
 
-File media masih di dua zip di folder Downloads dan **belum dipindahkan** ke sini.
-Struktur folder yang diharapkan `content.js`:
+Enam video aktif **sudah ada** di `media/`, diambil dari folder `DATA BASE VIDEO`
+dan dirapikan namanya:
 
 ```
 media/
-├── Video-Maternal-1-Kelas-Ibu-Hamil.mp4
-├── Video-Maternal-2-Pemeriksaan-ANC.mp4
-├── 2-Video-Audio-KEK.mp4
-├── 5-Video-IMD.mp4
-├── 4-Komik-IMD.pdf
-├── Video-ASI-Eksklusif.mp4
-├── Video-Posisi-Pelekatan.mp4
-├── TTD/
-│   ├── 1-Video-Gizi-1000-HPK-TTD.mp4
-│   ├── 3-Video-Gizi-Ibu-Hamil-TTD.mp4
-│   ├── 6-Komik-MAMAMIA-Anemia-dan-TTD.pdf
-│   └── 7-Video-TTD-Mitos-dan-Fakta.mp4
-├── MMS/
-│   ├── 1-Video-Gizi-1000-Hari.mp4
-│   ├── 3-Video-Gizi-Ibu-Hamil.mp4
-│   ├── 6-Komik-MAMAMIA-Anemia-MMS.pdf
-│   ├── 7-Komik-MMS.pdf
-│   └── 11-MMS-Gambar-otak-anak.pdf
-└── slide/
-    └── Sesi-01.pdf … Sesi-10.pdf
+├── K1-Tanda-Kehamilan.mp4          9 MB
+├── K1-Gizi-1000-HPK.mp4           51 MB
+├── K2-Gizi-Ibu-Hamil.mp4          68 MB
+├── K2-KEK.mp4                     42 MB
+├── K3-Perawatan-Sehari-hari.mp4    4 MB
+└── K4-Hal-yang-Dihindari.mp4      13 MB
 ```
+
+Sisa berkas di `media/` (paket TTD/MMS lama, `Video-Maternal-*`, folder `TTD/`
+dan `MMS/`) **tidak dipakai** aplikasi. Definisinya ada di `materiDitahan`.
+
+Tiga di antaranya duplikat byte-per-byte dari berkas di atas — boleh dihapus untuk
+menghemat 160 MB:
+
+```
+media/MMS/1-Video-Gizi-1000-Hari.mp4   = K1-Gizi-1000-HPK.mp4
+media/MMS/3-Video-Gizi-Ibu-Hamil.mp4   = K2-Gizi-Ibu-Hamil.mp4
+media/2-Video-Audio-KEK.mp4            = K2-KEK.mp4
+```
+
+Seluruh PDF (komik + slide) sudah dihapus dari disk — materi PDF tidak dipakai
+sejak konfirmasi puskesmas 2 Agustus.
+
+### Catatan lama — hanya berlaku kalau materi PDF dihidupkan lagi
 
 Dua pekerjaan mekanis yang belum dilakukan:
 
@@ -135,29 +156,42 @@ soffice --headless --convert-to pdf --outdir media\slide "MATERI 1-10 KIARA\*.pp
 
 Lalu ganti nama sesuai urutan sesi (`KUNJUNGAN KE - 1` → `Sesi-01.pdf`, dst).
 
-**2. Kompres video.** Ini bukan opsional:
+**2. Kompres video paket lama.** Berlaku hanya kalau `Video-Maternal-1` (366 MB)
+atau `Video-Maternal-2` (309 MB) dipakai lagi — keduanya melewati batas keras
+100 MB/berkas GitHub dan tidak bisa di-commit sama sekali. Presedennya
+`dashboard/questionnaire/compress_video.py` dari EduCatin.
 
-| Video | Ukuran asli |
-|---|---|
-| Video Maternal 1 — Kelas Ibu Hamil | **366 MB** |
-| Video Maternal 2 — Pemeriksaan ANC | **309 MB** |
-| Video TTD Mitos dan Fakta | 99 MB |
-| Total seluruh media | ~1,27 GB |
+---
 
-> **GitHub Pages tidak bisa dipakai untuk video ini.** Batas keras GitHub adalah
-> 100 MB per file, jadi dua video Maternal **tidak bisa di-commit sama sekali**.
-> Ditambah lagi: satu pasien menonton satu video 300 MB berarti 300 MB bandwidth.
-> Pada 40 pasien/hari, angkanya jauh melewati batas wajar.
->
-> Pilihan yang realistis:
-> 1. **YouTube unlisted + embed** — bandwidth Rp 0, kualitas menyesuaikan sinyal
->    otomatis. Di `content.js` ubah jadi `{ tipe:'youtube', youtubeId:'...' }`.
->    App sudah mendukung watch-gate lewat IFrame Player API.
-> 2. **Cloudflare R2** — egress gratis, kalau puskesmas tidak mau konten di YouTube.
-> 3. Kompres dulu ke 720p pakai `compress_video.py` dari folder EduCatin, tetap
->    di-host di luar GitHub.
+## Hosting Video
 
-Setelah media siap, set `PLACEHOLDER_MODE: false` di `config.js`.
+Paket aktif **186 MB**, berkas terbesar 68 MB — semuanya lolos batas 100 MB/berkas
+GitHub. 186 MB per ibu untuk 4 kunjungan, kuota GitHub Pages 100 GB/bulan →
+**±537 ibu/bulan**.
+
+Artinya video bisa langsung ikut repo. `.gitignore` masih memblokirnya karena
+sekali di-push, blob 186 MB permanen di riwayat git dan repo masih publik. Kalau
+disetujui, tambahkan:
+
+```gitignore
+!media/K1-Tanda-Kehamilan.mp4
+!media/K1-Gizi-1000-HPK.mp4
+!media/K2-Gizi-Ibu-Hamil.mp4
+!media/K2-KEK.mp4
+!media/K3-Perawatan-Sehari-hari.mp4
+!media/K4-Hal-yang-Dihindari.mp4
+```
+
+Alternatifnya:
+
+1. **YouTube unlisted + embed** — bandwidth Rp 0, kualitas menyesuaikan sinyal
+   otomatis. Di `content.js` ubah jadi `{ tipe:'youtube', youtubeId:'...' }`.
+   App sudah mendukung watch-gate lewat IFrame Player API. **Perlu izin
+   puskesmas** — link unlisted tetap terlihat di source aplikasi.
+2. **Cloudflare Pages / R2** — bandwidth tanpa batas, egress $0. Lebih bersih,
+   tapi mp4 statis tidak bisa menurunkan resolusi otomatis saat sinyal lemah.
+
+`PLACEHOLDER_MODE` sudah `false` — gate materi asli sudah aktif.
 
 ---
 
@@ -221,32 +255,42 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 
 | # | Item | Lokasi | Kenapa penting |
 |---|---|---|---|
-| 1 | **Wilayah TTD atau MMS** | `config.js` → `WILAYAH` | Menentukan video gizi, komik anemia, dan 3 soal. Salah pilih = ibu dapat materi program yang bukan wilayahnya. Puskesmas mengirim dua-duanya, jadi belum jelas. |
-| 2 | **File media** | `media/` | Slide masih `.pptx` (perlu PDF), video perlu dipindah ke YouTube/R2. `PLACEHOLDER_MODE` masih `true`. |
-| 3 | **Kunci jawaban yang terlihat keliru** | `content.js` → `perluKonfirmasi` | Dua soal, lihat bawah. |
-| 4 | **Pemetaan sesi → set soal** | `content.js` → `sesi[].setSoal` | Buku hanya punya 4 set untuk 10 sesi. Pemetaan sekarang disusun sendiri. |
-| 5 | **5 soal mana dari 10 di buku** | `content.js` → `sesi[].bagianSoal` | Puskesmas menetapkan 5 soal per sesi, buku punya 10 per pertemuan. Sekarang dibelah dua (soal 1–5 dan 6–10) menurut urutan buku. Perlu dipastikan puskesmas tidak punya pilihan sendiri. |
-| 6 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
-| 7 | `OFFLINE_MODE` | `config.js` | Masih `true` untuk preview. Data pasien belum masuk ke bidan. |
+| 1 | **Verifikasi 45 kunci jawaban** | `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | Berkas .docx puskesmas tidak memuat kunci. Yang dipakai sekarang kunci turunan. Kalau salah, skor dan status LULUS ikut salah. Lihat bawah. |
+| 2 | **Deploy versi baru Apps Script** | `gas/Code.gs` | `POIN_PER_SOAL` sudah 20 → 10. Kalau belum di-deploy, endpoint menolak skor 10/30/50/70/90 dan sebagian pasien gagal simpan. |
+| 3 | **Video untuk 2 topik** | `content.js` → `sesi[2].materi`, `sesi[3].materi` | K.3 "Mitos dan Fakta" dan K.4 "Tanda Bahaya" punya soal tanpa video. Pasien diuji tanpa materi. |
+| 4 | **Hosting video** | `.gitignore` | 186 MB semuanya lolos batas GitHub, jadi bisa ikut repo. Belum diputuskan: repo publik atau YouTube unlisted. |
+| 5 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. |
+| 6 | **Wilayah TTD atau MMS** | `config.js` → `WILAYAH` | Tidak lagi memengaruhi materi, tapi masih memengaruhi kunci soal K.1 no. 5. |
+| 7 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
 
 Saat aplikasi dibuka, semua item yang masih tersisa muncul otomatis sebagai
 peringatan di **console browser**.
 
-### Dua kunci jawaban yang perlu dicek ke bidan
+### Kunci jawaban belum diverifikasi bidan
 
-**Pertemuan II no. 3** — *"Kepanjangan dari IMD adalah Inisiasi Menyusu Dini."*
-Buku menulis kunci **S (Salah)**. Padahal IMD memang Inisiasi Menyusu Dini, dan
-slide Pertemuan ke-5 pun menulis demikian. Kalau dipakai apa adanya, ibu yang
-menjawab benar justru disalahkan.
+Sembilan berkas .docx dari puskesmas hanya memuat pertanyaan dan pilihan
+"Benar/Salah" — **tanpa menandai mana yang benar**. Aplikasi butuh kunci untuk
+menghitung skor, jadi 45 kunci diturunkan dari pedoman Buku KIA dan standar ANC.
+Setiap set ditandai `kunciTurunan: true` di `content.js`.
 
-**Pertemuan III no. 3 varian MMS** — *"Tinja berwarna kehitaman adalah salah satu
-efek samping minum MMS."* Kunci **S**, sementara varian TTD-nya menyatakan tinja
-kehitaman *tidak berbahaya* dengan kunci **B**. Dua pernyataan itu berlawanan arah,
-kemungkinan salah satu kuncinya tertukar.
+Daftar cetaknya ada di **`KUNCI-JAWABAN-PERLU-VERIFIKASI.md`** — kirim ke bidan
+untuk dicoret-koreksi, lalu ubah `kunci: true` ↔ `kunci: false` sesuai koreksinya
+dan hapus penanda `kunciTurunan`.
 
-Kunci di `content.js` **ditulis apa adanya sesuai buku** — tidak diperbaiki
-sendiri, karena ini konten kesehatan. Tandai `perluKonfirmasi` dihapus setelah
-bidan memberi keputusan.
+Tiga kunci yang bergantung pedoman, bukan fakta medis, ditandai tambahan
+`perluKonfirmasi`:
+
+| Soal | Kunci turunan | Perlu ditanya |
+|---|---|---|
+| K.1 Tanda Kehamilan no. 4 — *"trimester kedua dilakukan 1 kali"* | Benar | Benar di standar ANC 6× (TM1 2×, TM2 1×, TM3 3×). Beda kalau puskesmas masih pakai standar 4×. |
+| K.1 Tanda Kehamilan no. 5 — *"semua ibu hamil dapat TTD"* | Benar | Di wilayah program MMS ibu hamil menerima MMS, bukan TTD. |
+| K.4 Hal Dihindari no. 1 — *"kopi tidak lebih dari 1 cangkir"* | Benar | Pedoman membatasi kafein tapi angka "1 cangkir" tidak baku. |
+
+Bank soal buku fasilitator di `setSoalDitahan` punya kunci **asli dari buku**,
+bukan turunan — kecuali dua yang memang terlihat salah cetak (Pertemuan II no. 3
+soal IMD, dan Pertemuan III no. 3 varian MMS soal tinja kehitaman). Keduanya
+ditulis apa adanya sesuai buku dan ditandai `perluKonfirmasi`, tidak diperbaiki
+sendiri.
 
 ---
 

@@ -1,14 +1,28 @@
 # KIARA — file yang tidak boleh masuk repo
 # Alasan lengkap + hitungan bandwidth: lihat BATAS-MEDIA-GITHUB.md
 
-# Video. Dua file (Maternal 1 & 2) bahkan ditolak GitHub karena >100 MB.
-# Semua video dihost di YouTube unlisted / Cloudflare R2, bukan di repo.
+# Video: default diblokir, hanya paket aktif K1–K4 yang diizinkan.
+#
+# Sesi yang dipakai baru 1–4, jadi cuma 6 berkas ini yang perlu ada di
+# hosting. Totalnya 186 MB, berkas terbesar 68 MB — semuanya di bawah batas
+# 100 MB/berkas GitHub.
+#
+# Sisa isi media/ (paket TTD/MMS lama, Video-Maternal-*) sengaja TIDAK ikut:
+# tidak dipakai aplikasi, dan dua Video-Maternal (366 MB & 309 MB) memang
+# ditolak keras GitHub. Definisinya ada di `materiDitahan` pada content.js.
 media/*.mp4
 media/**/*.mp4
 media/*.mov
 media/**/*.mov
 media/*.mkv
 media/**/*.mkv
+
+!media/K1-Tanda-Kehamilan.mp4
+!media/K1-Gizi-1000-HPK.mp4
+!media/K2-Gizi-Ibu-Hamil.mp4
+!media/K2-KEK.mp4
+!media/K3-Perawatan-Sehari-hari.mp4
+!media/K4-Hal-yang-Dihindari.mp4
 
 # Buku rujukan internal 13,6 MB — bukan materi yang ditampilkan ke pasien
 media/**/Buku*Fasilitator*.pdf

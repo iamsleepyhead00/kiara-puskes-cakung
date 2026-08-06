@@ -60,23 +60,29 @@ lapisan pengaman kalau ada yang mengisi manual.
 
 ### Nilai yang mungkin di Pre-Test dan Post-Test
 
-Tiap sesi memakai **5 pertanyaan** Benar/Salah, masing-masing bernilai 20 poin.
-Jadi nilainya **hanya kelipatan 20**: `0, 20, 40, 60, 80, 100`. Tidak akan ada
-nilai seperti 70, 75, atau 83.
+Tiap kunjungan berisi **dua topik**, masing-masing 5 pertanyaan Benar/Salah —
+jadi **10 pertanyaan** per kunjungan, masing-masing bernilai 10 poin. Nilainya
+**kelipatan 10**: `0, 10, 20, … 100`. Tidak akan ada nilai seperti 75 atau 83.
+
+Kedua topik digabung jadi **satu** pre-test dan **satu** post-test, supaya tetap
+satu baris per kunjungan dengan satu `Pre-Test` dan satu `Post-Test`. Kalau tiap
+topik dites terpisah, sheet butuh 4 kolom skor per baris dan struktur 13 kolom
+pecah.
 
 `Status` menjadi `LULUS` mulai dari nilai **80**, yang berarti minimal
-**4 dari 5 jawaban benar** — sesuai konfirmasi puskesmas (4 Agu). Nilainya
-diatur di `KKM` pada `config.js`, dan endpoint punya salinannya di
-`BATAS.KKM_DEFAULT` pada `gas/Code.gs`. Kalau diubah, ubah keduanya.
+**8 dari 10 jawaban benar**. Nilainya diatur di `KKM` pada `config.js`, dan
+endpoint punya salinannya di `BATAS.KKM_DEFAULT` pada `gas/Code.gs`. Kalau
+diubah, ubah keduanya — termasuk `BATAS.POIN_PER_SOAL`, lalu deploy versi baru.
 
 | Benar | Skor | Status |
 |---|---|---|
-| 5 dari 5 | 100 | LULUS |
-| 4 dari 5 | 80 | LULUS |
-| 3 dari 5 | 60 | BELUM |
-| 2 dari 5 | 40 | BELUM |
-| 1 dari 5 | 20 | BELUM |
-| 0 dari 5 | 0 | BELUM |
+| 10 dari 10 | 100 | LULUS |
+| 9 dari 10 | 90 | LULUS |
+| 8 dari 10 | 80 | LULUS |
+| 7 dari 10 | 70 | BELUM |
+| 6 dari 10 | 60 | BELUM |
+| … | … | BELUM |
+| 0 dari 10 | 0 | BELUM |
 
 ---
 

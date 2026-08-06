@@ -45,7 +45,7 @@
 
     sesiKe: 1, sumberData: 'SISTEM', riwayat: [], rataPost: 0,
 
-    soal: [], setSoal: 1,
+    soal: [], setSoal: '',
     jawabanPre: [], jawabanPost: [],
     qIndex: 0,
     skorPre: 0, skorPost: 0, percobaanPost: 0,
@@ -123,42 +123,52 @@
     return sesiData(ke).materi.map(resolveMateri).filter(Boolean);
   }
 
+  /** Daftar kunci set soal untuk satu sesi, selalu dalam bentuk array. */
+  function kunciSetSoal(ke) {
+    const v = sesiData(ke).setSoal;
+    if (Array.isArray(v)) return v;
+    return v == null ? [] : [v];
+  }
+
   /**
-   * Bank soal untuk satu sesi, varian TTD/MMS sudah dipilih.
+   * Bank soal untuk satu sesi.
    *
-   * Puskesmas menetapkan 5 soal per sesi, sementara satu pertemuan di buku
-   * fasilitator berisi 10 soal. Jadi set dibelah: `bagianSoal: 1` mengambil
-   * soal 1–5, `bagianSoal: 2` mengambil soal 6–10.
+   * Satu kunjungan berisi DUA topik, masing-masing 5 soal dari berkas
+   * puskesmas — jadi 10 soal digabung jadi satu pre-test dan satu
+   * post-test. Ini yang menjaga struktur 13 kolom sheet tetap utuh:
+   * satu baris per kunjungan, satu skorPre, satu skorPost.
    *
-   * Kalau `bagianSoal` tidak diisi, ambil SOAL_PER_SESI pertama — jangan
-   * kirim 10 soal, karena skornya jadi kelipatan 10 dan ditolak endpoint.
+   * Tiap soal membawa `topik` (nama set asalnya) supaya bisa ditampilkan
+   * di kartu soal — pasien tahu bagian mana yang sedang diuji.
+   *
+   * `varian` masih didukung untuk bank soal buku (lihat setSoalDitahan),
+   * walau berkas puskesmas yang aktif sekarang tidak memakainya.
    */
   function soalSesi(ke) {
-    const data = sesiData(ke);
-    const set = CONTENT.setSoal[data.setSoal];
-    if (!set) return [];
-
-    const n = CFG.SOAL_PER_SESI;
-    const bagian = Number(data.bagianSoal) || 1;
-    const mulai = (bagian - 1) * n;
-
-    return set.soal.slice(mulai, mulai + n).map((s) => {
-      if (s.varian) {
-        const v = s.varian[wilayah()] || s.varian.TTD;
-        return { pertanyaan: v.pertanyaan, kunci: v.kunci, perluKonfirmasi: v.perluKonfirmasi };
-      }
-      return { pertanyaan: s.pertanyaan, kunci: s.kunci, perluKonfirmasi: s.perluKonfirmasi };
+    const out = [];
+    kunciSetSoal(ke).forEach((kunci) => {
+      const set = CONTENT.setSoal[kunci];
+      if (!set) return;
+      set.soal.forEach((s) => {
+        const src = s.varian ? (s.varian[wilayah()] || s.varian.TTD) : s;
+        if (!src) return;
+        out.push({
+          pertanyaan: src.pertanyaan,
+          kunci: src.kunci,
+          perluKonfirmasi: src.perluKonfirmasi,
+          kunciTurunan: !!set.kunciTurunan,
+          topik: set.nama
+        });
+      });
     });
+    return out;
   }
 
   function namaSet(ke) {
-    const data = sesiData(ke);
-    const set = CONTENT.setSoal[data.setSoal];
-    if (!set) return '-';
-    // Sebut bagiannya juga, supaya bidan bisa mencocokkan ke soal di buku.
-    const bagian = Number(data.bagianSoal) || 1;
-    const n = CFG.SOAL_PER_SESI;
-    return set.nama + ' · soal ' + ((bagian - 1) * n + 1) + '–' + (bagian * n);
+    const nama = kunciSetSoal(ke)
+      .map((k) => (CONTENT.setSoal[k] || {}).nama)
+      .filter(Boolean);
+    return nama.length ? nama.join(' + ') : '-';
   }
 
   function hitungSkor(jawaban, soal) {
@@ -459,7 +469,7 @@
      ══════════════════════════════════════════════════════ */
   function mulaiPreTest() {
     state.soal = soalSesi(state.sesiKe);
-    state.setSoal = sesiData(state.sesiKe).setSoal;
+    state.setSoal = kunciSetSoal(state.sesiKe).join(' + ');
     state.jawabanPre = new Array(state.soal.length).fill(null);
     state.qIndex = 0;
     $('pre-sub').textContent = 'Sesi ' + state.sesiKe;
@@ -495,8 +505,10 @@
     if (isPost) $('post-feedback').innerHTML = '';
 
     const card = el('div', 'qc');
+    // Label pakai topik soal itu sendiri, bukan gabungan nama semua set.
+    // Satu kunjungan berisi dua topik, jadi pasien perlu tahu yang mana.
     card.appendChild(el('div', 'qn' + (isPost ? ' teal' : ''),
-      'SOAL ' + (i + 1) + ' · ' + namaSet(state.sesiKe)));
+      'SOAL ' + (i + 1) + ' · ' + (s.topik || namaSet(state.sesiKe))));
     card.appendChild(el('div', 'qt', s.pertanyaan));
 
     OPSI_BS.forEach((o) => {
@@ -1228,8 +1240,35 @@
     if (!CFG.SHEETS_ENDPOINT && !CFG.OFFLINE_MODE) p.push('SHEETS_ENDPOINT belum diisi di config.js');
     if (CFG.OFFLINE_MODE) p.push('OFFLINE_MODE masih true — data hanya tersimpan di HP ini');
     if (CFG.PLACEHOLDER_MODE) p.push('PLACEHOLDER_MODE masih true — gate materi dilepas otomatis');
-    p.push('WILAYAH = ' + wilayah() + ' — perlu dikonfirmasi puskesmas (TTD atau MMS)');
-    p.push('Pemetaan sesi → set soal disusun sendiri, belum dikonfirmasi puskesmas');
+
+    // Berkas soal dari puskesmas tidak memuat kunci jawaban. Yang dipakai
+    // sekarang kunci turunan dari pedoman Buku KIA / standar ANC — harus
+    // diverifikasi bidan dulu, kalau tidak skornya bisa salah semua.
+    const turunan = Object.keys(CONTENT.setSoal)
+      .filter((k) => CONTENT.setSoal[k].kunciTurunan)
+      .map((k) => CONTENT.setSoal[k].nama);
+    if (turunan.length) {
+      p.push('KUNCI JAWABAN BELUM DIVERIFIKASI BIDAN pada ' + turunan.length +
+             ' set (' + turunan.join(', ') + ') — berkas .docx puskesmas tidak memuat kuncinya');
+    }
+
+    // Topik yang punya soal tapi belum ada videonya.
+    const tanpaVideo = Object.keys(CONTENT.setSoal)
+      .filter((k) => CONTENT.setSoal[k].tanpaVideo)
+      .map((k) => CONTENT.setSoal[k].nama);
+    if (tanpaVideo.length) {
+      p.push('Topik tanpa video: ' + tanpaVideo.join(', ') + ' — pasien diuji tanpa materi');
+    }
+
+    // Jumlah soal per sesi harus sama dengan SOAL_PER_SESI, kalau tidak
+    // skornya bukan kelipatan POIN_PER_SOAL dan endpoint akan menolaknya.
+    CONTENT.sesi.forEach((s) => {
+      const n = soalSesi(s.ke).length;
+      if (n !== CFG.SOAL_PER_SESI) {
+        p.push('Sesi ' + s.ke + ' punya ' + n + ' soal, seharusnya ' + CFG.SOAL_PER_SESI +
+               ' — skor akan ditolak endpoint');
+      }
+    });
 
     const suspek = [];
     Object.keys(CONTENT.setSoal).forEach((k) => {
@@ -1238,7 +1277,7 @@
         if (pk) suspek.push(CONTENT.setSoal[k].nama + ' soal ' + (i + 1));
       });
     });
-    if (suspek.length) p.push('Kunci jawaban perlu dikonfirmasi: ' + suspek.join(', '));
+    if (suspek.length) p.push('Kunci jawaban bergantung pedoman/kebijakan: ' + suspek.join(', '));
 
     console.warn('%cKIARA — perlu dibereskan sebelum dipakai pasien:', 'font-weight:bold');
     p.forEach((x) => console.warn('  • ' + x));

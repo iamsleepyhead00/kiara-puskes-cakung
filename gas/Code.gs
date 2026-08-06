@@ -93,10 +93,11 @@ var HEADER_HARAPAN = [
 var BATAS = {
   NAMA_MIN: 3,      NAMA_MAKS: 80,
   ALAMAT_MIN: 5,    ALAMAT_MAKS: 200,
-  // 5 soal per sesi, lulus 4 dari 5 → KKM 80. Harus sama dengan KKM di config.js.
+  // 10 soal per kunjungan (2 topik × 5 soal), lulus 8 dari 10 → KKM 80.
+  // Harus sama dengan KKM di config.js.
   KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 80,
   SESI_MAKS: 10,    SESI_DEFAULT: 4,
-  POIN_PER_SOAL: 20,                  // 5 soal → skor selalu kelipatan 20
+  POIN_PER_SOAL: 10,                  // 10 soal → skor kelipatan 10
   SIMPAN_PER_JENDELA: 40,             // kapasitas nyata ~40 pasien/hari
   JENDELA_MENIT: 10
 };
