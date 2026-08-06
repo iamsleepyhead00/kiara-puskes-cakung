@@ -32,8 +32,16 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 
 **Yang sudah jalan dan terverifikasi:**
 
-- Backend Apps Script **versi 5** sudah ter-deploy dan aktif
-- Validasi ketat live — diuji: skor 90 ditolak `"Post-Test harus kelipatan 20"`, skor 80 diterima
+- Backend Apps Script ter-deploy dan aktif. Balasan ping: `versi: 5, kolom: 13`
+- **`POIN_PER_SOAL: 10` terverifikasi live (6 Agu).** Cara ujinya: kirim
+  `skorPost=75` — bukan kelipatan 10 maupun 20, jadi pasti ditolak, dan pesan
+  errornya yang menunjukkan konstanta mana yang aktif. Balasan:
+  `"Post-Test harus kelipatan 10"` (kode lama akan bilang "kelipatan 20").
+  Probe ini tidak menulis apa pun ke sheet karena validasi jalan sebelum lock
+- Kontrol tambahan: `skorPost=70` lolos validasi lalu dicegat `DUPLIKAT` —
+  skor kelipatan 10 yang dulu ditolak sekarang diterima
+- Repo sudah `versi: 6`, deployment masih `versi: 5`. Bedanya cuma komentar
+  dan nomor versi, tidak ada beda perilaku. Paste ulang saat sempat
 - Simpan dan lookup ke sheet berhasil (13 kolom, satu baris per kunjungan)
 - Clamp KKM terbukti: kirim `kkm=0` tetap menghasilkan `BELUM`, bukan `LULUS`
 - Anti-injeksi formula terbukti: `=CONCATENATE(E2:E50)` tersimpan sebagai teks, bukan formula
@@ -231,41 +239,14 @@ pindahkan entrinya dari `materiDitahan` ke `materi` lalu daftarkan di
 
 Untuk kunjungan 4 tidak ada kandidat sama sekali.
 
-### 5.3 Video masih dikecualikan dari git
-
-`.gitignore` masih memblokir semua `media/**/*.mp4`. Alasannya sudah berubah:
-paket baru cuma **186 MB** dengan berkas terbesar 68 MB, semuanya lolos batas
-100 MB/berkas GitHub. Dulu 1.122 MB dengan dua berkas 366 MB dan 309 MB yang
-ditolak keras.
-
-Hitungan bandwidth jadi masuk akal: 186 MB per ibu untuk 4 kunjungan, kuota
-GitHub Pages 100 GB/bulan → **±537 ibu/bulan**. Dulu hanya ±111.
-
-Artinya YouTube tidak wajib lagi — video bisa langsung ikut repo. **Belum
-dilakukan** karena sekali di-push, blob 186 MB itu permanen di riwayat git dan
-repo masih publik. Perlu keputusan user dulu.
-
-Kalau setuju, tambahkan pengecualian di `.gitignore`:
-
-```gitignore
-!media/K1-Tanda-Kehamilan.mp4
-!media/K1-Gizi-1000-HPK.mp4
-!media/K2-Gizi-Ibu-Hamil.mp4
-!media/K2-KEK.mp4
-!media/K3-Perawatan-Sehari-hari.mp4
-!media/K4-Hal-yang-Dihindari.mp4
-```
-
-Alternatifnya tetap YouTube unlisted (butuh izin puskesmas) atau Cloudflare
-Pages / R2. Anti-skip sudah siap untuk keduanya: `controls:0` + `disablekb:1`
-untuk YouTube, `controls=false` untuk mp4. Kalau pindah ke YouTube, ubah
-`content.js` ke `tipe:'youtube'` dan isi ID videonya.
-
-### 5.4 GitHub Pages belum diaktifkan
+### 5.3 GitHub Pages belum diaktifkan — satu-satunya sisa blocker teknis
 
 Settings → Pages → main / root.
 
-### 5.5 Duplikat media 160 MB
+Video sudah di repo (commit `4c5a265`), jadi begitu Pages nyala materinya
+langsung jalan. Tidak perlu YouTube.
+
+### 5.4 Duplikat media 160 MB
 
 Tiga berkas paket lama identik byte-per-byte dengan berkas baru (lihat bagian 4).
 `MMS/1-Video-Gizi-1000-Hari.mp4`, `MMS/3-Video-Gizi-Ibu-Hamil.mp4`, dan
@@ -285,7 +266,6 @@ sendiri karena `media/` isinya aset klien.
 | 5 | Wilayah **TTD atau MMS** | tidak lagi memengaruhi materi (paket baru satu set), tapi masih memengaruhi kunci soal K.1 no. 5. `config.js` masih `TTD` |
 | 6 | Kunjungan 5+ | puskesmas baru mengirim K.1–K.4. `sesiDitahan` sekarang kosong |
 | 7 | Template pesan WhatsApp | dikarang sendiri |
-| 8 | Video ikut repo publik atau YouTube unlisted | perlu keputusan user + izin puskesmas. Lihat 5.3 |
 
 Konten kesehatan tidak pernah dikarang. Kunci jawaban diturunkan karena berkas
 sumber memang tidak memuatnya, dan semuanya ditandai untuk diverifikasi — bukan
@@ -297,16 +277,22 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Deploy versi baru Apps Script** | `POIN_PER_SOAL` sudah diubah 20 → 10 di `gas/Code.gs`. Kalau belum di-deploy, endpoint menolak skor 10/30/50/70/90 — sebagian pasien gagal simpan. Copy `Code.gs` → Deploy → Manage deployments → Edit → New version |
-| 2 | Kirim `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` ke bidan | blocker utama, lihat 5.1 |
-| 3 | Jalankan `hapusUji()` di Apps Script | Ada 1 baris uji NIK `9999999999999999` sisa verifikasi terakhir |
-| 4 | Putuskan hosting video: ikut repo atau YouTube | 186 MB sudah lolos batas GitHub, lihat 5.3 |
+| 1 | **Aktifkan GitHub Pages** | Settings → Pages → main / root. Sisa blocker teknis terakhir — video sudah di repo, lihat 5.3 |
+| 2 | **Kirim `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` ke bidan** | blocker utama, lihat 5.1 |
+| 3 | Jalankan `hapusUji()` di Apps Script | Masih ada 1 baris uji NIK `9999999999999999` — terbukti masih di sheet, uji simpan 6 Agu dibalas `DUPLIKAT` |
+| 4 | Paste ulang `Code.gs` saat sempat | Repo sudah `versi: 6` (komentar basi dibereskan), deployment masih balas `versi: 5`. **Tidak urgen** — `POIN_PER_SOAL` sudah benar, bedanya cuma komentar dan nomor versi |
 | 5 | Tanya puskesmas soal 2 topik tanpa video | lihat 5.2 |
-| 6 | Aktifkan GitHub Pages | Settings → Pages → main / root |
-| 7 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
-| 8 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
-| 9 | Hapus 3 video duplikat (160 MB) | opsional, lihat 5.5 |
-| 10 | Pindahkan repo keluar folder kantor | opsional, lihat bagian 8 |
+| 6 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
+| 7 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
+| 8 | Hapus 3 video duplikat (160 MB) | opsional, lihat 5.4 |
+| 9 | Pindahkan repo keluar folder kantor | opsional, lihat bagian 8 |
+
+**Sudah selesai 6 Agustus:**
+
+- Deploy Apps Script skala skor baru — terverifikasi live: 70 dan 90 diterima,
+  75 ditolak `"Post-Test harus kelipatan 10"`
+- Hosting video — 6 berkas K1–K4 (186 MB) ikut repo di commit `4c5a265`,
+  `.gitignore` diubah jadi whitelist
 
 ---
 
@@ -392,7 +378,7 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 | `gas/Code.gs` | backend Apps Script, validasi, uji `ujiTulis`/`ujiBaca`/`ujiValidasi`/`hapusUji` |
 | `icons/favicon.svg` | ikon bayi untuk tab |
 | `STRUKTUR-GOOGLE-SHEET.md` | 13 kolom, aturan validasi, 9 rumus rekap untuk bidan |
-| `BATAS-MEDIA-GITHUB.md` | analisis batas media. ⚠️ angkanya untuk paket lama 1.122 MB, sudah tidak berlaku — paket baru 186 MB |
+| `BATAS-MEDIA-GITHUB.md` | batas GitHub + hitungan bandwidth paket 186 MB, alasan video ikut repo, opsi cadangan YouTube/R2. Analisis paket lama disimpan sebagai riwayat |
 | `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | 45 soal + kunci turunan, untuk dicoret-koreksi bidan |
 | `README.md` | ikhtisar, alur layar, tabel pertanyaan terbuka |
 | `media/` | 6 video aktif (186 MB) + 11 video paket lama, **semua tidak ikut git** |

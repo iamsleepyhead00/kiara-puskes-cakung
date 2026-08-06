@@ -191,9 +191,9 @@ function validasiSimpan(p) {
     return 'Kunjungan ke- harus 1–' + BATAS.SESI_MAKS;
   }
 
-  // Soal Benar/Salah 5 butir × 20 poin, jadi skor selalu kelipatan 20:
-  // 0, 20, 40, 60, 80, 100. Nilai seperti 70 atau 77 tidak mungkin
-  // berasal dari aplikasi.
+  // Soal Benar/Salah 10 butir × 10 poin (2 topik × 5 soal per kunjungan),
+  // jadi skor selalu kelipatan 10: 0, 10, 20, … 100. Nilai seperti 75 atau
+  // 77 tidak mungkin berasal dari aplikasi.
   var skor = [['Pre-Test', p.skorPre], ['Post-Test', p.skorPost]];
   for (var i = 0; i < skor.length; i++) {
     var v = Number(skor[i][1] == null || skor[i][1] === '' ? 0 : skor[i][1]);
@@ -243,7 +243,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 5, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 6, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }

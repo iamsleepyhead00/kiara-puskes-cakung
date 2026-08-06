@@ -1,243 +1,131 @@
-# Media KIARA — Apa yang Tidak Bisa Masuk GitHub
+# Media KIARA vs Batas GitHub
 
-Dokumen ini mendata file media Kelas Ibu Hamil dari puskesmas terhadap batas
-teknis GitHub, dan apa yang harus dilakukan untuk masing-masing.
-
-Sumber data: `drive-download-20260802T081008Z-1-001.zip` dan
-`MATERI 1-10 KIARA-20260802T075419Z-1-001.zip`.
-Total **33 file, 1.299,7 MB (1,27 GB)**.
+Diperbarui **6 Agustus 2026**, setelah puskesmas mengirim folder
+`DATA BASE VIDEO`.
 
 ---
 
-## Kesimpulan
+## Kesimpulan sekarang: GitHub cukup
 
-**GitHub tidak bisa dipakai untuk menampung video KIARA.** Ada tiga alasan, dan
-alasan ketiga yang paling menentukan.
+Paket aktif hanya **6 video, 186 MB**, berkas terbesar 68 MB. Semuanya lolos
+batas 100 MB/berkas GitHub, jadi video **ikut repo** dan dilayani GitHub Pages.
+Tidak perlu YouTube atau Cloudflare R2.
 
-1. **2 file langsung ditolak.** Ukurannya di atas 100 MB, batas keras GitHub.
-   Push akan gagal, bukan cuma diperingatkan.
-2. **5 file lain kena warning** karena di atas 50 MB. Masih bisa masuk, tapi
-   bikin repo berat dan clone lambat.
-3. **Bandwidth-nya yang membunuh.** Satu ibu yang menyelesaikan 10 sesi akan
-   mengunduh sekitar **1 GB video**. Hitungannya ada di bawah.
-
-Yang harus dilakukan: **video dan komik dipindah ke YouTube unlisted atau
-Cloudflare R2. Repo GitHub hanya berisi kode.**
-
----
-
-## Batas GitHub yang Berlaku
-
-| Batas | Angka | Sifat |
+| Berkas | Ukuran | Kunjungan |
 |---|---|---|
-| Ukuran satu file | **100 MB** | Keras — push ditolak |
-| Peringatan ukuran file | 50 MB | Lunak — hanya warning |
-| Ukuran repo yang disarankan | 1 GB | Lunak |
-| Ukuran situs GitHub Pages | 1 GB | Keras untuk Pages |
-| Bandwidth GitHub Pages | ~100 GB/bulan | Lunak — bisa di-throttle |
-| Git LFS gratis | 1 GB simpan + 1 GB transfer/bulan | Tidak cukup untuk kasus ini |
+| `K1-Tanda-Kehamilan.mp4` | 8,9 MB | 1 |
+| `K1-Gizi-1000-HPK.mp4` | 50,9 MB | 1 |
+| `K2-Gizi-Ibu-Hamil.mp4` | 67,9 MB | 2 |
+| `K2-KEK.mp4` | 41,6 MB | 2 |
+| `K3-Perawatan-Sehari-hari.mp4` | 4,4 MB | 3 |
+| `K4-Hal-yang-Dihindari.mp4` | 12,5 MB | 4 |
+| **Total** | **186,2 MB** | |
+
+Ter-commit di `4c5a265`. Dua berkas di atas 50 MB kena *warning* GH001 saat
+push (saran pakai Git LFS), tapi bukan penolakan — push berhasil.
 
 ---
 
-## 1. Ditolak GitHub — di atas 100 MB
+## Batas GitHub yang berlaku
 
-Dua file ini **tidak bisa di-commit sama sekali**. Push akan gagal dengan
-error `file is 366.40 MB; this exceeds GitHub's file size limit of 100.00 MB`.
-
-| # | File | Ukuran | Dipakai di |
+| Batas | Angka | Sifat | Posisi kita |
 |---|---|---|---|
-| 1 | `Copy of Video Maternal 1 - Kelas Ibu Hamil (FINAL SUB IDN).mp4` | **366,4 MB** | Sesi 1 |
-| 2 | `Copy of Video Maternal 2 - Pemeriksaan ANC (FINAL SUB IDN).mp4` | **309,3 MB** | Sesi 2 |
-
-**Subtotal: 675,7 MB** — lebih dari separuh seluruh paket media.
-
-> Kedua file ini bukan bagian dari paket TTD/MMS. Namanya diawali "Copy of",
-> jadi perlu dipastikan ke puskesmas apakah keduanya memang materi resmi atau
-> kiriman tambahan.
+| Ukuran satu berkas | 100 MB | **Keras** — push ditolak | ✅ maks 68 MB |
+| Peringatan ukuran berkas | 50 MB | Lunak — hanya warning | ⚠️ 2 berkas kena |
+| Ukuran repo disarankan | 1 GB | Lunak | ✅ ± 190 MB |
+| Ukuran situs GitHub Pages | 1 GB | **Keras** untuk Pages | ✅ ± 190 MB |
+| Bandwidth GitHub Pages | ± 100 GB/bulan | Lunak — bisa di-throttle | ✅ lihat bawah |
 
 ---
 
-## 2. Kena Warning — 50 sampai 100 MB
+## Hitungan bandwidth
 
-Masih bisa masuk GitHub, tapi tidak disarankan. Setiap `git clone` akan
-menarik seluruh ukuran ini.
+Satu ibu menonton seluruh 4 kunjungan = **186 MB** (tiap video diputar sekali).
 
-| # | File | Ukuran | Wilayah | Dipakai di |
-|---|---|---|---|---|
-| 1 | `7. Video TTD Mitos dan Fakta.mp4` | 98,5 MB | TTD | Sesi 3 |
-| 2 | `3. Video GIZI IBU HAMIL.mp4` | 67,9 MB | MMS | Sesi 2 |
-| 3 | `9. Video Posisi Pelekatan.mp4` | 59,4 MB | TTD | Sesi 9 |
-| 4 | `13. Video Posisi Pelekatan.mp4` | 59,4 MB | MMS | Sesi 9 |
-| 5 | `1. Video GIZI 1000 HARI.mp4` | 50,9 MB | MMS | Sesi 1 |
-
-**Subtotal: 336,1 MB.** Nomor 3 dan 4 file yang sama persis — lihat bagian 4.
-
----
-
-## 3. Ukurannya Aman, Tapi Tetap Sebaiknya di Luar Repo
-
-Secara teknis boleh masuk GitHub. Tapi kalau video lain sudah pindah ke
-YouTube/R2, video ini ikut saja supaya penanganannya seragam.
-
-| File | Ukuran | Wilayah |
-|---|---|---|
-| `3. Video GIZI IBU HAMIL-TTD.mp4` | 47,4 MB | TTD |
-| `2. Video Audio KEK.mp4` | 41,6 MB | TTD & MMS (kembar) |
-| `1. Video Gizi 1000 HPK-TTD.mp4` | 32,7 MB | TTD |
-| `8. / 12. Video ASI EKSKLUSIF.mp4` | 30,0 MB | TTD & MMS (kembar) |
-| `5. Video IMD.mp4` | 17,6 MB | TTD & MMS (kembar) |
-
-Dokumen PDF berikut **aman dan boleh masuk repo**:
-
-| File | Ukuran |
+| | Angka |
 |---|---|
-| `Buku Pegangan Fasilitator Kelas Ibu Hamil 2025.pdf` | 13,6 MB |
-| `4. Komik IMD.pdf` | 3,9 MB |
-| `6. Komik MAMAMIA Anemia MMS_rev.pdf` | 2,1 MB |
-| `10. Lagu MMS.pdf` | 2,0 MB |
-| `6. Komik MAMAMIA Anemia dan TTD_rev.pdf` | 0,6 MB |
-| `7. Komik MMS.pdf` | 0,3 MB |
-| `11. MMS-Gambar otak anak.pdf` | 0,2 MB |
-| 10 file `.pptx` slide materi | 2,7 MB total |
+| Per ibu, 4 kunjungan | 186 MB |
+| Kuota Pages per bulan | 100 GB |
+| **Kapasitas** | **± 537 ibu/bulan** |
 
-Catatan: buku fasilitator 13,6 MB itu rujukan internal, bukan materi yang
-ditampilkan ke pasien. Tidak perlu ikut ke repo aplikasi.
+Pada kapasitas 40 pasien/hari (± 880 sesi/bulan) dengan rata-rata 47 MB per
+sesi, pemakaiannya sekitar **41 GB/bulan** — masih separuh kuota, cukup ruang
+untuk ibu yang memutar ulang video.
 
----
+Bandingkan dengan paket lama: 896 MB per ibu, hanya cukup untuk ± 111 ibu.
 
-## 4. File Kembar — Bisa Hemat 152,5 MB
-
-Lima file identik (CRC dan ukuran sama persis) muncul dua kali karena
-disalin ke folder TTD dan MMS:
-
-| File | Ukuran | Muncul |
-|---|---|---|
-| `Video Posisi Pelekatan.mp4` | 59,4 MB | TTD & MMS |
-| `Video Audio KEK.mp4` | 41,6 MB | TTD & MMS |
-| `Video ASI EKSKLUSIF.mp4` | 30,0 MB | TTD & MMS |
-| `Video IMD.mp4` | 17,6 MB | TTD & MMS |
-| `Komik IMD.pdf` | 3,9 MB | TTD & MMS |
-
-Kalau disimpan sekali saja, hemat **152,5 MB**. Struktur folder `media/` di
-`content.js` sudah menerapkan ini: file kembar diletakkan di root, file khusus
-wilayah di subfolder `TTD/` dan `MMS/`.
-
-| | Ukuran |
-|---|---|
-| Total mentah | 1.299,7 MB |
-| Setelah dedup | **1.147,2 MB** |
-| Setelah dedup, tanpa 2 file yang ditolak | **± 456 MB** |
+> **WiFi puskesmas tetap perlu diperhatikan.** Kunjungan 1 mengunduh 60 MB dan
+> kunjungan 2 mengunduh 110 MB. Jauh lebih ringan dari paket lama (400 MB per
+> sesi), tapi kalau beberapa ibu menonton serentak di ruang tunggu, tetap berat.
 
 ---
 
-## 5. Hitungan Bandwidth — Alasan Utama Menolak GitHub
+## Kalau bandwidth ternyata jadi masalah
 
-Batas 100 MB per file bisa diakali dengan kompres. Bandwidth tidak bisa.
+Aplikasi sudah siap untuk dua-duanya, jadi pindah hosting tidak perlu ubah logika.
 
-Video yang diunduh satu ibu per sesi (wilayah TTD):
-
-| Sesi | Video | Unduhan per ibu |
-|---|---|---|
-| 1 | Maternal 1 + Gizi 1000 HPK | **399 MB** |
-| 2 | Maternal 2 + KEK + Gizi Ibu Hamil | **398 MB** |
-| 3 | Mitos dan Fakta TTD | 98 MB |
-| 4 | — (slide saja) | 0 |
-| 5 | IMD | 18 MB |
-| 6 | — | 0 |
-| 7 | — | 0 |
-| 8 | — | 0 |
-| 9 | ASI Eksklusif + Posisi Pelekatan | 89 MB |
-| 10 | — | 0 |
-| | **Total 10 sesi** | **± 1.002 MB per ibu** |
-
-Artinya:
-
-- **1 ibu menyelesaikan program = ± 1 GB bandwidth**
-- 100 ibu = 100 GB → **satu bulan kuota Pages habis untuk 100 ibu saja**
-- Pada kapasitas 40 pasien/hari (± 880 sesi/bulan), rata-rata 100 MB per sesi
-  berarti sekitar **88 GB/bulan** — mentok di batas, sebelum dihitung ibu yang
-  memutar ulang video
-
-Ditambah lagi, WiFi puskesmas harus melayani unduhan 400 MB untuk satu ibu di
-sesi 1. Praktiknya akan buffering berat, terlepas dari batas GitHub.
-
----
-
-## 6. Rekomendasi
-
-### Prioritas 1 — pindahkan video ke YouTube unlisted
-
-Paling murah dan paling cocok:
-
-- bandwidth **Rp 0**, tidak ada batas kuota
-- kualitas menyesuaikan kekuatan sinyal otomatis, jadi tidak buffering
-- unlisted = tidak muncul di pencarian, hanya bisa dibuka yang punya link
-- aplikasi **sudah mendukung** watch-gate YouTube lewat IFrame Player API
-
-Di `content.js`, ubah entri video jadi:
+**YouTube unlisted** — bandwidth Rp 0, kualitas menyesuaikan sinyal otomatis
+sehingga tidak buffering di sinyal lemah. Watch-gate sudah didukung lewat
+IFrame Player API (`controls:0` + `disablekb:1`). Di `content.js` ubah entrinya:
 
 ```js
-VID_MATERNAL_1: {
+K1_GIZI_1000HPK: {
   tipe: 'youtube',
-  judul: 'Kelas Ibu Hamil',
-  youtubeId: 'ID_VIDEO_DARI_URL'
+  judul: 'Gizi 1000 HPK',
+  youtubeId: 'ID_DARI_URL'
 },
 ```
 
-Kalau puskesmas menolak konten di YouTube, alternatifnya **Cloudflare R2**
-(egress gratis) atau **Google Drive** milik puskesmas.
+⚠️ **Perlu izin puskesmas.** Walau unlisted, link-nya terlihat di source aplikasi.
 
-### Prioritas 2 — kompres dulu sebelum diunggah ke mana pun
+**Cloudflare Pages / R2** — bandwidth tanpa batas, egress $0. Lebih bersih dari
+sisi kepemilikan konten, tapi mp4 statis tidak bisa menurunkan resolusi otomatis
+saat sinyal lemah.
 
-Video 366 MB untuk materi edukasi itu kelewat besar. Skrip
-`compress_video.py` sudah ada di folder EduCatin (`dashboard/questionnaire/`).
-Turunkan ke 720p; biasanya ukuran turun 60–80% tanpa penurunan yang terasa di HP.
-
-### Prioritas 3 — jangan pakai Git LFS
-
-Kuota gratisnya 1 GB simpan + 1 GB transfer per bulan. Media KIARA 1,12 GB, jadi
-kuota simpan sudah lewat sebelum dipakai, dan transfer 1 GB habis oleh satu ibu.
-
-### Yang tetap boleh masuk repo GitHub
-
-Kode aplikasi, dan slide materi setelah dikonversi ke PDF (total ± 3 MB).
-Komik PDF (total ± 12 MB) juga masih wajar kalau mau disimpan di repo.
+**Jangan pakai Git LFS.** Kuota gratisnya 1 GB simpan + 1 GB transfer/bulan.
+Transfer 1 GB habis oleh 5 ibu saja.
 
 ---
 
-## 7. `.gitignore` yang Harus Dipakai
+## Yang tidak ikut repo
 
-Buat file `.gitignore` di `dashboard/kiara-puskes-cakung/`:
+`.gitignore` memblokir semua `media/**/*.mp4` lalu mengizinkan 6 berkas K1–K4
+secara eksplisit. Sisanya sengaja ditinggal:
 
-```gitignore
-# Media besar — dihost di YouTube unlisted / Cloudflare R2, bukan di repo.
-# Lihat BATAS-MEDIA-GITHUB.md
-media/*.mp4
-media/**/*.mp4
-media/*.mov
-media/**/*.mov
-
-# Buku rujukan internal, bukan materi yang ditampilkan ke pasien
-media/**/Buku*Fasilitator*.pdf
-
-# Sisa hasil ekstrak zip
-*.zip
-```
-
-Slide PDF (`media/slide/*.pdf`) dan komik PDF sengaja **tidak** di-ignore
-karena ukurannya kecil dan memang perlu tampil di aplikasi.
-
----
-
-## 8. Ringkasan Tindakan
-
-| # | Tindakan | Untuk |
+| Berkas | Ukuran | Alasan |
 |---|---|---|
-| 1 | Konfirmasi ke puskesmas: apakah 2 video "Copy of Video Maternal" memang materi resmi | 675,7 MB |
-| 2 | Kompres seluruh video ke 720p | 15 file |
-| 3 | Unggah video ke YouTube unlisted, catat `youtubeId` masing-masing | 11 video unik |
-| 4 | Ubah `tipe` video di `content.js` jadi `'youtube'` | `content.js` |
-| 5 | Konversi 10 slide `.pptx` ke PDF, taruh di `media/slide/` | ± 3 MB |
-| 6 | Salin komik PDF ke `media/`, hilangkan yang kembar | 7 file, ± 12 MB |
-| 7 | Buat `.gitignore` seperti bagian 7 | repo |
-| 8 | Set `PLACEHOLDER_MODE: false` di `config.js` | aktifkan gate asli |
+| `Video-Maternal-1-Kelas-Ibu-Hamil.mp4` | 366,4 MB | **Ditolak keras GitHub** (>100 MB). Digantikan `K1-Tanda-Kehamilan.mp4` yang hanya 8,9 MB |
+| `Video-Maternal-2-Pemeriksaan-ANC.mp4` | 309,3 MB | **Ditolak keras GitHub** |
+| `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` | 98,5 MB | Tidak dipakai. Kandidat untuk soal K.3 "Mitos dan Fakta" yang belum ada videonya — lihat CATATAN-SESI 5.2 |
+| `Video-Posisi-Pelekatan.mp4` | 59,4 MB | Untuk sesi 9, belum aktif |
+| `Video-ASI-Eksklusif.mp4` | 30,0 MB | Untuk sesi 9, belum aktif |
+| `5-Video-IMD.mp4` | 17,6 MB | Untuk sesi 5, belum aktif |
+| `TTD/1-`, `TTD/3-` | 80,1 MB | Varian TTD, tidak dipakai paket baru |
+| `MMS/1-`, `MMS/3-`, `2-Video-Audio-KEK.mp4` | 160,4 MB | **Duplikat byte-per-byte** dari K1/K2 — boleh dihapus dari disk |
+| Seluruh PDF (komik + slide) | — | Sudah dihapus. Materi PDF tidak dipakai sejak 2 Agustus |
+
+Definisi semuanya tersimpan di `materiDitahan` pada `content.js`, jadi
+pemetaannya tidak hilang kalau sesi 5+ dihidupkan nanti.
+
+---
+
+## Riwayat — paket lama (1.299,7 MB)
+
+Sebelum 5 Agustus, sumbernya `drive-download-20260802T081008Z-1-001.zip` +
+`MATERI 1-10 KIARA-20260802T075419Z-1-001.zip`: 33 berkas, 1,27 GB, terbagi
+wilayah TTD/MMS.
+
+Kesimpulan dokumen versi lama: **GitHub tidak layak untuk video KIARA.**
+Alasannya masih benar untuk paket itu:
+
+- 2 berkas di atas 100 MB → push ditolak, bukan cuma diperingatkan
+- 5 berkas lain 50–100 MB → repo berat, clone lambat
+- satu ibu mengunduh ± 1 GB untuk 10 sesi → kuota Pages habis di 100 ibu
+
+Kesimpulan itu **tidak lagi berlaku** karena kurasi puskesmas memotong ukuran
+paket sampai 86%: 1.122 MB → 186 MB. Video pengganti bukan hasil kompresi,
+tapi memang video berbeda yang jauh lebih pendek.
+
+Rencana lama (kompres 720p pakai `compress_video.py` dari EduCatin → unggah ke
+YouTube unlisted → repo isi kode saja) jadi tidak perlu dijalankan. Skripnya
+tetap relevan kalau suatu saat dua video Maternal dipakai lagi.
