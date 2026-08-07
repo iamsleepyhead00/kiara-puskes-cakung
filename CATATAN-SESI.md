@@ -76,11 +76,131 @@ Jangan diubah tanpa instruksi baru.
 | Tombol "Materi Berikutnya" | **disembunyikan**, bukan diredam, sampai materi tuntas |
 | Dropdown | placeholder wajib jadi nilai awal, tapi **tidak boleh muncul sebagai baris** di daftar (pakai atribut `hidden`) |
 | Nomor WA tujuan | `085889945829` (bukan yang lama `085945371933`) |
+| Kelurahan | 8 kelurahan Cakung + **"Luar wilayah Cakung"** (6 Agu). Ibu luar wilayah boleh ikut |
+| Pemulihan sesi | progres disimpan di HP, **berlaku sehari**, ditawarkan bukan otomatis, dihapus setelah tuntas |
 | Keamanan endpoint | risiko diterima selama masa uji, repo tetap publik |
 
 ---
 
 ## 4. Yang dikerjakan di sesi ini
+
+### Revisi ronde 1 — 6 Agustus
+
+Klien minta 6 revisi. Tiga dikerjakan (yang tidak butuh info tambahan),
+tiga ditunda karena menunggu jawaban — lihat bagian 6.
+
+**Kelurahan "Luar wilayah Cakung".** Ibu dari luar wilayah tetap boleh ikut
+kelas. Ditaruh paling bawah supaya kelurahan Cakung tetap terlihat lebih dulu.
+
+> ⚠️ **INI MEMBUAT PASTE ULANG `Code.gs` JADI WAJIB, BUKAN OPSIONAL.**
+> Daftar kelurahan ada di dua tempat: `config.js` untuk dropdown, dan
+> `KELURAHAN_SAH` di `gas/Code.gs` untuk validasi. Dua-duanya sudah diubah di
+> repo, tapi **deployment masih pakai daftar lama**. Sebelum di-deploy, ibu
+> yang memilih "Luar wilayah Cakung" akan **gagal simpan** — ditolak
+> `"Kelurahan tidak dikenali"`.
+>
+> Aman untuk sekarang karena GitHub Pages belum nyala, jadi belum ada pasien
+> yang bisa membuka aplikasinya. Tapi urutannya wajib: **deploy Code.gs dulu,
+> baru nyalakan Pages.** `versi` sudah dinaikkan 6 → 7 supaya bisa dicek.
+
+**Ikon ibu hamil.** Menggantikan ikon bayi di tiga tempat: splash (S1),
+header (S2 dst), dan `icons/favicon.svg`.
+
+Yang dipakai: **Google Material Symbols `pregnant_woman`, varian Rounded.**
+Lisensi Apache 2.0 — bebas komersial, boleh dimodifikasi, atribusi tidak
+diwajibkan. Sumber `github.com/google/material-design-icons`. Atribusinya tetap
+dicatat di komentar `index.html` dan `icons/favicon.svg` sebagai praktik baik.
+
+Jalan sampai ke situ tidak lurus, dan pelajarannya perlu dicatat:
+
+1. **Percobaan pertama: menggambar sendiri.** Lucide tidak punya ikon ibu hamil
+   (hanya `baby`, `person-standing`, `heart`), dan Flaticon/iStock menuntut
+   atribusi yang tidak enak di repo publik. Jadi koordinat SVG-nya ditulis
+   manual, gaya garis meniru Lucide.
+2. **Ditolak klien.** Alasannya tepat dan bisa dilihat di gambar: kepala tidak
+   menyambung ke badan sehingga tampak seperti balon di atas tongkat, dan
+   keseluruhannya terbaca sebagai huruf **"b"** — bukan orang. Di 16px cuma
+   jadi bercak. Bulatan bayi di perut terbaca sebagai lubang.
+3. **Akar masalahnya:** menggambar ilustrasi lewat koordinat manual tanpa bisa
+   melihat hasilnya. Untuk ikon, ambil yang sudah digambar desainer.
+4. Klien sempat memilih varian buatan sendiri (rangka sama + hati di perut),
+   lalu berganti ke Material Symbols Rounted setelah membandingkan tujuh
+   varian berdampingan di halaman pratinjau.
+
+Bentuknya **padat (fill)**, berbeda dari ikon Lucide lain di aplikasi yang
+bergaris tipis. Itu disengaja: di favicon 16px garis tipis nyaris hilang,
+bidang penuh tetap terbaca. Konsekuensinya ikon KIARA di header tampak lebih
+berat dari ikon di sekitarnya — untuk ikon merek itu wajar.
+
+Dipasang sebagai SVG inline, bukan `data-lucide`, jadi `lucide.createIcons()`
+tidak menyentuhnya. Warnanya ikut `currentColor` sehingga CSS yang sudah ada
+(`.sp-logo svg`, `.ah-i svg`) tetap berlaku tanpa perubahan. `viewBox`-nya
+`0 -960 960 960` — itu sistem koordinat Material Symbols, bukan salah tulis.
+
+**Animasi splash — halo berdenyut.** Dipilih klien dari empat varian
+(bernapas, detak jantung, halo, mengapung).
+
+Dua cincin menyebar keluar dari kotak logo; ikonnya sendiri diam. Cincin kedua
+diberi jeda setengah siklus (1,65s) supaya alirannya terus-menerus, bukan dua
+cincin muncul bersamaan. Hati kecil di bawah tulisan KIARA ikut berdenyut.
+
+| Keputusan | Alasan |
+|---|---|
+| Mulai setelah 0,7 detik | animasi masuk `naik` juga memakai `transform` — kalau bersamaan, tabrakan |
+| Siklus 1,9 detik | splash cuma 2500ms dan 700ms sudah dipakai animasi masuk, jadi tersisa ±1,8 detik. Kalau `SPLASH_DURATION_MS` dinaikkan, siklus boleh diperlambat |
+| `z-index:-1` pada cincin | supaya lewat di belakang kotak, tidak menutupi ikon |
+| Hemat gerak: cincin **dimatikan**, bukan dipercepat | aturan lama `animation-duration:.01ms` + `infinite` membuat cincin berkedip cepat — justru yang paling dihindari pengguna `prefers-reduced-motion`. Ikon dan teks tetap tampil normal |
+
+**Pemulihan sesi setelah browser tertutup.** Sebelumnya seluruh `state` hanya
+ada di memori — `localStorage` cuma dipakai mode offline. Jadi ibu yang keluar
+dari browser kehilangan semuanya: NIK, skor pre-test, jawaban, dan yang paling
+menyakitkan **progres nonton video**. Anti-skip menghitung akumulasi detik di
+`tonton.akum`; kalau hilang, video 68 MB harus ditonton ulang dari nol beserta
+kuotanya.
+
+Tiga aturan yang dipatok:
+
+| Aturan | Alasan |
+|---|---|
+| Berlaku **sehari saja** | Progres kemarin tidak dipulihkan — ibu datang untuk kunjungan baru, bukan melanjutkan yang lalu |
+| **Ditawarkan**, tidak otomatis | Kalau HP-nya dipakai ibu lain, dia tidak boleh terjebak melanjutkan data orang |
+| **Dihapus setelah tuntas** | Begitu hasil masuk sheet dan KKM tercapai, progres dibuang supaya pemulihan tidak memicu submit dobel |
+
+Layar yang bisa dipulihkan: **S3–S7 dan S12**. S1/S2 memang awal, S8/S10/S11
+sudah selesai. Kalau simpan ke server **gagal**, progres justru dipertahankan —
+ibu masih bisa buka ulang dan coba kirim lagi.
+
+Soal **tidak** ikut disimpan, dibangun ulang dari `content.js` lewat
+`soalSesi()`. Yang disimpan cuma `jumlahSoal` sebagai pemeriksa: kalau bank
+soalnya berubah sejak progres dibuat, jumlahnya tidak cocok lagi dan progres
+dibuang — bukan dipaksa dipakai dengan jawaban yang bergeser satu.
+
+Yang berubah:
+
+| File | Perubahan |
+|---|---|
+| `app.js` | blok baru `LS_PROGRES` — `simpanProgres()`, `bacaProgres()`, `hapusProgres()` |
+| `app.js` | `showScreen()` mencatat `state.layar` lalu menyimpan. Titik simpan tambahan di `pilihOpsi()`, tombol lanjut kuis, dan `bukaGate()` — pindah soal tidak memanggil `showScreen()` |
+| `app.js` | `catatTonton()` menyimpan tiap 5 detik tontonan, bukan tiap pembacaan (2×/detik) |
+| `app.js` | `initSplash()` menawarkan lanjut kalau ada progres hari ini. `tampilTawaranLanjut()`, `initLanjut()`, `pulihkanProgres()` baru |
+| `app.js` | `gambarProgresTonton()` baru — bar tonton digambar dari nilai yang dipulihkan, bukan bar kosong yang bikin ibu ragu |
+| `app.js` | tautan "Bukan saya" di S10/S11 menghapus progres sebelum reload |
+| `index.html` | layar `s-lanjut` baru. Id-nya sengaja bukan `s13` supaya tidak tertukar dengan layar sertifikat yang dicabut |
+| `index.html` | ikon ibu hamil di splash + header, SVG inline Material Symbols Rounded |
+| `icons/favicon.svg` | ikon yang sama, kotak plum berisi bidang krem |
+| `style.css` | `@keyframes halo` + `@keyframes detakHati`, `.sp-logo` diberi `position:relative`, guard hemat gerak diperluas |
+| `config.js` | `KELURAHAN` + `'Luar wilayah Cakung'` |
+| `gas/Code.gs` | `KELURAHAN_SAH` ikut ditambah, `versi` 6 → 7 |
+| `index.html` | `style.css?v=10`, `config.js?v=10`, `app.js?v=17` |
+
+`config.js` sempat naik ke `v=8` lalu `v=9` saat `OFFLINE_MODE` dibolak-balik
+untuk uji lokal — dua angka itu pernah menyajikan isi berbeda, jadi dinaikkan
+ke `v=10` supaya cache browser tidak ambigu. **`OFFLINE_MODE` sudah kembali
+`false`** sebelum commit.
+
+Verifikasi: 49 uji lolos — penjaga batas harian, versi, jumlah soal berubah,
+layar akhir, isi rusak, dan konsistensi daftar kelurahan antara `config.js`
+dan `Code.gs`.
 
 ### Migrasi ke folder DATA BASE VIDEO — 5 Agustus
 
@@ -239,12 +359,29 @@ pindahkan entrinya dari `materiDitahan` ke `materi` lalu daftarkan di
 
 Untuk kunjungan 4 tidak ada kandidat sama sekali.
 
-### 5.3 GitHub Pages belum diaktifkan — satu-satunya sisa blocker teknis
+### 5.3 Deployment Apps Script tertinggal dari repo
 
-Settings → Pages → main / root.
+GitHub Pages **sudah nyala** — `index.html` balas 200, dan video sudah di repo
+(commit `4c5a265`) jadi materinya langsung jalan. Tidak perlu YouTube.
 
-Video sudah di repo (commit `4c5a265`), jadi begitu Pages nyala materinya
-langsung jalan. Tidak perlu YouTube.
+Masalahnya sekarang terbalik: **frontend lebih baru dari backend.** Opsi
+kelurahan "Luar wilayah Cakung" sudah tampil di dropdown, tapi deployment
+Apps Script masih memakai `KELURAHAN_SAH` yang lama. Sudah diuji langsung ke
+endpoint dari origin `github.io`:
+
+```
+save kelurahan=Luar wilayah Cakung  →  {"ok":false,"error":"Kelurahan tidak dikenal"}
+```
+
+Ibu yang memilih opsi itu **gagal simpan**. Yang lain aman — simpan dan lookup
+terbukti jalan, barisnya mendarat di sheet.
+
+Paparannya kecil karena aplikasi belum dipakai pasien nyata (kunci jawaban
+masih menunggu verifikasi bidan), tapi harus dibereskan sebelum dipakai:
+paste `gas/Code.gs` → Deploy → Manage deployments → Edit → New version.
+Cek berhasil: `?action=ping` balas `versi: 7`.
+
+Deployment sekarang masih balas `versi: 5`.
 
 ### 5.4 Duplikat media 160 MB
 
@@ -266,6 +403,9 @@ sendiri karena `media/` isinya aset klien.
 | 5 | Wilayah **TTD atau MMS** | tidak lagi memengaruhi materi (paket baru satu set), tapi masih memengaruhi kunci soal K.1 no. 5. `config.js` masih `TTD` |
 | 6 | Kunjungan 5+ | puskesmas baru mengirim K.1–K.4. `sesiDitahan` sekarang kosong |
 | 7 | Template pesan WhatsApp | dikarang sendiri |
+| 8 | **Revisi "puskesmas tempat periksa"** | kalimat kliennya berhenti di titik dua. Dua tafsir: (a) tambah opsi ke dropdown yang ada — ringan; (b) **field baru** terpisah dari puskesmas tempat kelas — berarti kolom sheet jadi 14, nabrak aturan 13 kolom. Belum dikerjakan sampai jelas |
+| 9 | **Link grup WhatsApp kelas ibu hamil online** | klien mau tombol gabung grup di layar hasil akhir. Butuh link `chat.whatsapp.com/...`. Belum ada |
+| 10 | **Rujukan halaman Buku KIA per topik** | klien mau pesan alternatif untuk ibu tanpa kuota. Butuh 8 nomor halaman dari bidan — tidak boleh dikarang. Plus keputusan: apakah baca Buku KIA membuka post-test? Kalau ya, anti-skip jadi sia-sia; kalau tidak, manfaatnya kecil |
 
 Konten kesehatan tidak pernah dikarang. Kunci jawaban diturunkan karena berkas
 sumber memang tidak memuatnya, dan semuanya ditandai untuk diverifikasi — bukan
@@ -277,22 +417,29 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Aktifkan GitHub Pages** | Settings → Pages → main / root. Sisa blocker teknis terakhir — video sudah di repo, lihat 5.3 |
+| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **MENDESAK.** Pages sudah nyala dan opsi "Luar wilayah Cakung" sudah tampil di dropdown, tapi deployment masih menolaknya — diuji langsung, balasannya `{"ok":false,"error":"Kelurahan tidak dikenal"}`. Cek berhasil: `?action=ping` balas `versi: 7`. Lihat 5.3 |
 | 2 | **Kirim `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` ke bidan** | blocker utama, lihat 5.1 |
-| 3 | Jalankan `hapusUji()` di Apps Script | Masih ada 1 baris uji NIK `9999999999999999` — terbukti masih di sheet, uji simpan 6 Agu dibalas `DUPLIKAT` |
-| 4 | Paste ulang `Code.gs` saat sempat | Repo sudah `versi: 6` (komentar basi dibereskan), deployment masih balas `versi: 5`. **Tidak urgen** — `POIN_PER_SOAL` sudah benar, bedanya cuma komentar dan nomor versi |
+| 3 | Jalankan `hapusUji()` di Apps Script | Ada baris uji NIK `9999999999999999` dari uji tulis-baca 7 Agu |
+| 4 | Jawab 3 revisi yang ditunda | lihat bagian 6 no. 8–10 |
 | 5 | Tanya puskesmas soal 2 topik tanpa video | lihat 5.2 |
 | 6 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
 | 7 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
 | 8 | Hapus 3 video duplikat (160 MB) | opsional, lihat 5.4 |
 | 9 | Pindahkan repo keluar folder kantor | opsional, lihat bagian 8 |
 
-**Sudah selesai 6 Agustus:**
+**Sudah selesai 6–7 Agustus:**
 
 - Deploy Apps Script skala skor baru — terverifikasi live: 70 dan 90 diterima,
   75 ditolak `"Post-Test harus kelipatan 10"`
 - Hosting video — 6 berkas K1–K4 (186 MB) ikut repo di commit `4c5a265`,
   `.gitignore` diubah jadi whitelist
+- GitHub Pages aktif — `index.html` balas 200
+- Jalur simpan dari origin `github.io` diuji tulis-lalu-baca: CORS beres
+  (`Access-Control-Allow-Origin: *` di dua hop), baris mendarat di sheet.
+  Laporan "data tidak masuk sheet" ternyata karena `OFFLINE_MODE` sempat
+  disetel `true` untuk uji lokal — bukan cacat aplikasi
+- Ronde 1 revisi klien: kelurahan luar wilayah, ikon ibu hamil, animasi
+  splash, pemulihan sesi setelah browser tertutup
 
 ---
 
@@ -354,8 +501,8 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 - Google kadang membalas halaman HTML "Halaman Tidak Ditemukan" alih-alih JSON.
   Itu gangguan sesaat, ulangi requestnya
 - Naikkan `?v=` di `index.html` setiap JS/CSS berubah. Sekarang:
-  `style.css?v=9`, `config.js?v=7`, `content.js?v=7`, `visit-tracker.js?v=4`,
-  `app.js?v=16`
+  `style.css?v=9`, `config.js?v=8`, `content.js?v=7`, `visit-tracker.js?v=4`,
+  `app.js?v=17`
 - **Jangan mengarang konten kesehatan.** Kunci jawaban yang terlihat keliru
   ditulis apa adanya lalu ditandai `perluKonfirmasi`
 - Jangan pakai identitas git kantor untuk repo pribadi user
@@ -369,7 +516,8 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 
 | File | Isi |
 |---|---|
-| `index.html` | 13 layar (S1–S12), markup semua screen |
+| `index.html` | 13 layar (S1–S12) + `s-lanjut` (tawaran melanjutkan sesi tertunda), markup semua screen |
+| `icons/favicon.svg` | ikon ibu hamil (Material Symbols Rounded) dalam kotak plum |
 | `style.css` | palet plum-wine `#b03a5b`, 9 token ukuran teks (`--t-micro` … `--t-logo`) |
 | `config.js` | satu-satunya file yang perlu diubah saat deploy |
 | `content.js` | peta kunjungan 1–4, 6 video, 8 set soal ×5, `materiDitahan` + `setSoalDitahan` (paket lama & buku fasilitator), template WA |

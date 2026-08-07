@@ -53,7 +53,11 @@
     materi: [], materiIndex: 0, materiTuntas: [],
 
     tersimpan: false,
-    screenSebelumnya: 's8'
+    screenSebelumnya: 's8',
+
+    // Layar yang sedang tampil. Dipakai untuk memulihkan posisi kalau
+    // browser tertutup di tengah sesi.
+    layar: 's1'
   };
 
   let ytApiSiap = null;
@@ -61,9 +65,111 @@
   let gateTimer = null;
   let barTimer = null;
 
+  // Penanda akumulasi tonton saat progres terakhir ditulis, supaya
+  // localStorage tidak ditulis dua kali per detik selama video berjalan.
+  let simpanTerakhir = 0;
+
   // Pelacak tonton: yang dihitung akumulasi detik yang benar-benar diputar,
   // bukan posisi progress bar. Bikin geser-ke-ujung tidak ada gunanya.
-  const tonton = { akum: 0, last: 0, kunci: false };
+  const tonton = { akum: 0, last: 0, kunci: false, durasi: 0 };
+
+  /* ══════════════════════════════════════════════════════
+     PROGRES TERTUNDA — pulih setelah browser tertutup
+
+     Sebelumnya seluruh state hanya ada di memori, jadi ibu yang keluar
+     dari browser di tengah sesi kehilangan semuanya: NIK, skor pre-test,
+     dan yang paling menyakitkan — progres nonton video. Anti-skip menghitung
+     akumulasi detik di `tonton.akum`; kalau hilang, video 68 MB harus
+     ditonton ulang dari nol beserta kuotanya.
+
+     Tiga aturan yang dipatok:
+
+     1. BERLAKU SEHARI SAJA. Progres dari kemarin tidak dipulihkan — ibu
+        datang untuk kunjungan baru, bukan melanjutkan yang lalu.
+     2. DITAWARKAN, TIDAK OTOMATIS. Kalau HP-nya dipakai ibu lain, dia
+        tidak boleh terjebak melanjutkan data orang.
+     3. DIHAPUS SETELAH TUNTAS. Begitu hasil masuk sheet dan KKM tercapai,
+        progres dibuang supaya pemulihan tidak memicu submit dobel.
+
+     Layar yang boleh dipulihkan hanya S3–S7 dan S12. S1/S2 tidak perlu
+     (memang awal), S8/S10/S11 sudah selesai.
+
+     Nama dan NIK ikut tersimpan di localStorage HP pasien. Karena ini HP
+     ibu sendiri (scan QR di ruang tunggu) risikonya wajar. Jalan hapusnya:
+     tombol "Bukan saya / mulai dari awal" di layar tawaran, tautan "Bukan
+     saya" di layar duplikat dan sudah-lulus, otomatis saat sesi tuntas,
+     dan otomatis lewat batas hari.
+     ══════════════════════════════════════════════════════ */
+  const LS_PROGRES = 'kiara_progres_v1';
+  const LAYAR_PULIH = ['s3', 's4', 's5', 's6', 's7', 's12'];
+
+  const LABEL_LAYAR = {
+    s3: 'Konfirmasi data',
+    s4: 'Pre-test',
+    s5: 'Hasil pre-test',
+    s6: 'Materi',
+    s7: 'Post-test',
+    s12: 'Hasil post-test'
+  };
+
+  function simpanProgres() {
+    // Tanpa NIK belum ada yang perlu disimpan, dan layar akhir tidak
+    // dipulihkan supaya tidak ada peluang submit dobel.
+    if (!state.nik || LAYAR_PULIH.indexOf(state.layar) === -1) return;
+    try {
+      localStorage.setItem(LS_PROGRES, JSON.stringify({
+        versi: 1,
+        tanggal: VT.todayJakarta(),
+        layar: state.layar,
+
+        nik: state.nik, nikMask: state.nikMask, nama: state.nama, hp: state.hp,
+        alamat: state.alamat, kelurahan: state.kelurahan,
+        puskesmas: state.puskesmas, pernahPeriksa: state.pernahPeriksa,
+
+        sesiKe: state.sesiKe, sumberData: state.sumberData,
+        riwayat: state.riwayat, rataPost: state.rataPost,
+
+        // Soal TIDAK disimpan — dibangun ulang dari content.js lewat
+        // soalSesi(). Kalau bank soalnya berubah sejak progres dibuat,
+        // jumlahnya tidak lagi cocok dan progres dibuang, bukan dipaksa
+        // dipakai dengan jawaban yang bergeser.
+        jumlahSoal: state.soal.length,
+        jawabanPre: state.jawabanPre, jawabanPost: state.jawabanPost,
+        qIndex: state.qIndex,
+        skorPre: state.skorPre, skorPost: state.skorPost,
+        percobaanPost: state.percobaanPost,
+
+        materiIndex: state.materiIndex, materiTuntas: state.materiTuntas,
+        tontonAkum: tonton.akum, tontonDurasi: tonton.durasi,
+
+        tersimpan: state.tersimpan
+      }));
+    } catch (e) {
+      // Kuota localStorage penuh atau mode privat. Bukan alasan menghentikan
+      // sesi — pemulihan itu kenyamanan, bukan syarat.
+      console.warn('[KIARA] progres gagal disimpan:', e);
+    }
+  }
+
+  function bacaProgres() {
+    let p;
+    try {
+      p = JSON.parse(localStorage.getItem(LS_PROGRES));
+    } catch (e) {
+      return null;
+    }
+    if (!p || p.versi !== 1) return null;
+    if (p.tanggal !== VT.todayJakarta()) return null;      // bukan hari ini
+    if (!p.nik || LAYAR_PULIH.indexOf(p.layar) === -1) return null;
+    if (p.jumlahSoal !== soalSesi(p.sesiKe).length) return null;  // bank soal berubah
+    return p;
+  }
+
+  function hapusProgres() {
+    try {
+      localStorage.removeItem(LS_PROGRES);
+    } catch (e) { /* diabaikan */ }
+  }
 
   /* ══════════════════════════════════════════════════════
      ROUTER
@@ -75,6 +181,9 @@
     if (t) t.classList.add('on');
     window.scrollTo(0, 0);
     icons();
+
+    state.layar = id;
+    simpanProgres();
   }
 
   function busy(on, text) {
@@ -209,7 +318,137 @@
      S1 · SPLASH
      ══════════════════════════════════════════════════════ */
   function initSplash() {
-    setTimeout(() => showScreen('s2'), CFG.SPLASH_DURATION_MS);
+    setTimeout(() => {
+      // Ada progres hari ini yang belum tuntas? Tawarkan melanjutkan,
+      // jangan langsung ke form data yang berarti mengulang dari awal.
+      const p = bacaProgres();
+      if (p) return tampilTawaranLanjut(p);
+      showScreen('s2');
+    }, CFG.SPLASH_DURATION_MS);
+  }
+
+  /* ══════════════════════════════════════════════════════
+     S-LANJUT · TAWARAN MELANJUTKAN SESI TERTUNDA
+     ══════════════════════════════════════════════════════ */
+  function tampilTawaranLanjut(p) {
+    const sesi = sesiData(p.sesiKe);
+
+    $('lj-sub').textContent = 'Tersimpan di HP ini hari ini';
+    $('lj-nama').textContent = p.nama || '-';
+    $('lj-nik').textContent = p.nikMask || VT.maskNIK(p.nik);
+    $('lj-sesi').textContent = 'Ke-' + p.sesiKe + ' · ' + (sesi ? sesi.judul : '-');
+    $('lj-posisi').textContent = LABEL_LAYAR[p.layar] || p.layar;
+
+    // showScreen() menulis progres, dan di layar ini state masih kosong —
+    // jadi layarnya diganti manual supaya progres yang tersimpan tidak
+    // ketimpa sebelum pasien memilih.
+    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('on'));
+    $('s-lanjut').classList.add('on');
+    window.scrollTo(0, 0);
+    icons();
+  }
+
+  function initLanjut() {
+    $('btn-lanjut-progres').addEventListener('click', () => {
+      const p = bacaProgres();
+      if (!p) return showScreen('s2');
+      pulihkanProgres(p);
+    });
+
+    $('btn-lanjut-baru').addEventListener('click', () => {
+      hapusProgres();
+      showScreen('s2');
+    });
+  }
+
+  /**
+   * Kembalikan state lalu antar ke layar tempat ibu berhenti.
+   *
+   * Soal dibangun ulang dari content.js, tidak dibaca dari simpanan —
+   * `bacaProgres()` sudah memastikan jumlahnya masih cocok, jadi indeks
+   * jawabannya tetap sejajar.
+   */
+  function pulihkanProgres(p) {
+    state.nik = p.nik;
+    state.nikMask = p.nikMask || VT.maskNIK(p.nik);
+    state.nama = p.nama;
+    state.hp = p.hp;
+    state.alamat = p.alamat;
+    state.kelurahan = p.kelurahan;
+    state.puskesmas = p.puskesmas;
+    state.pernahPeriksa = p.pernahPeriksa || 'Tidak';
+
+    state.sesiKe = p.sesiKe;
+    state.sumberData = p.sumberData || 'SISTEM';
+    state.riwayat = p.riwayat || [];
+    state.rataPost = p.rataPost || 0;
+
+    state.soal = soalSesi(state.sesiKe);
+    state.setSoal = kunciSetSoal(state.sesiKe).join(' + ');
+    state.jawabanPre = p.jawabanPre || new Array(state.soal.length).fill(null);
+    state.jawabanPost = p.jawabanPost || [];
+    state.qIndex = Math.min(Number(p.qIndex) || 0, state.soal.length - 1);
+    state.skorPre = p.skorPre || 0;
+    state.skorPost = p.skorPost || 0;
+    state.percobaanPost = p.percobaanPost || 0;
+
+    state.materi = materiSesi(state.sesiKe);
+    state.materiIndex = Math.min(Number(p.materiIndex) || 0,
+                                 Math.max(0, state.materi.length - 1));
+    state.materiTuntas = (p.materiTuntas && p.materiTuntas.length === state.materi.length)
+      ? p.materiTuntas
+      : new Array(state.materi.length).fill(false);
+
+    state.tersimpan = !!p.tersimpan;
+
+    switch (p.layar) {
+      case 's4':
+        $('pre-sub').textContent = 'Sesi ' + state.sesiKe;
+        renderSoal('pre');
+        showScreen('s4');
+        break;
+
+      case 's5':
+        // selesaiPreTest() menghitung ulang skor dan menyiapkan playlist,
+        // hasilnya sama dengan yang tersimpan karena jawabannya sama.
+        selesaiPreTest();
+        break;
+
+      case 's6':
+        tampilMateri();
+        // tampilVideo() memanggil resetTonton(), jadi akumulasi tonton
+        // dikembalikan SESUDAH materi tergambar.
+        tonton.akum = Number(p.tontonAkum) || 0;
+        tonton.durasi = Number(p.tontonDurasi) || 0;
+        simpanTerakhir = tonton.akum;
+        gambarProgresTonton();
+        // Materi ini sudah pernah tuntas — buka gate-nya supaya tombol
+        // lanjut langsung ada, tidak menonton ulang tanpa guna.
+        if (state.materiTuntas[state.materiIndex]) bukaGate();
+        else if (tonton.akum > 0) {
+          $('mt-gate-text').textContent =
+            'Ibu sudah menonton ' + jam(tonton.akum) +
+            '. Tekan putar untuk melanjutkan dari sisa waktunya.';
+        }
+        break;
+
+      case 's7':
+        if (!state.jawabanPost.length) {
+          state.jawabanPost = new Array(state.soal.length).fill(null);
+        }
+        $('post-sub').textContent = 'Sesi ' + state.sesiKe;
+        renderSoal('post');
+        showScreen('s7');
+        break;
+
+      case 's12':
+        tampilBelumKKM('');
+        break;
+
+      default:
+        // s3 dan sisanya: kembali ke konfirmasi data.
+        tampilKonfirmasi();
+    }
   }
 
   /* ══════════════════════════════════════════════════════
@@ -565,6 +804,11 @@
     btn.disabled = false;
     btn.className = 'btn ' + (isPost ? 'g' : 'p');
     icons();
+
+    // Jawaban tersimpan begitu dipilih. Berpindah soal tidak memanggil
+    // showScreen(), jadi progres harus ditulis di sini juga — kalau tidak,
+    // ibu yang keluar di soal ke-7 kembali ke soal ke-1.
+    simpanProgres();
   }
 
   function initKuis() {
@@ -573,6 +817,7 @@
       if (state.qIndex < state.soal.length - 1) {
         state.qIndex += 1;
         renderSoal('pre');
+        simpanProgres();
       } else {
         selesaiPreTest();
       }
@@ -583,6 +828,7 @@
       if (state.qIndex < state.soal.length - 1) {
         state.qIndex += 1;
         renderSoal('post');
+        simpanProgres();
       } else {
         selesaiPostTest();
       }
@@ -750,6 +996,20 @@
     tonton.akum = 0;
     tonton.last = 0;
     tonton.kunci = false;
+    tonton.durasi = 0;
+  }
+
+  /**
+   * Gambar ulang bar dan keterangan tonton dari nilai `tonton` yang ada.
+   * Dipakai juga saat memulihkan progres, supaya ibu langsung melihat
+   * bagian yang sudah ia tonton tadi — bukan bar kosong yang bikin ragu.
+   */
+  function gambarProgresTonton() {
+    if (!tonton.durasi) return;
+    const target = tonton.durasi * CFG.MIN_TONTON_PERSEN;
+    $('mt-bar').style.width = Math.min(100, (tonton.akum / target) * 100) + '%';
+    $('mt-time').textContent =
+      jam(tonton.akum) + ' ditonton dari ' + jam(tonton.durasi);
   }
 
   /**
@@ -774,6 +1034,14 @@
       return false;                               // last sengaja tidak diubah
     }
     tonton.last = t;
+    tonton.durasi = durasi;
+
+    // Simpan tiap 5 detik tontonan, bukan tiap pembacaan (2×/detik) —
+    // menulis localStorage 2×/detik selama video 10 menit itu sia-sia.
+    if (tonton.akum - simpanTerakhir >= 5) {
+      simpanTerakhir = tonton.akum;
+      simpanProgres();
+    }
 
     const target = durasi * CFG.MIN_TONTON_PERSEN;
     $('mt-bar').style.width = Math.min(100, (tonton.akum / target) * 100) + '%';
@@ -953,6 +1221,7 @@
     $('btn-dok-selesai').hidden = true;
     state.materiTuntas[state.materiIndex] = true;
     renderPlaylist($('mt-playlist'), state.materiIndex);
+    simpanProgres();
   }
 
   function siapkanYT() {
@@ -1054,6 +1323,15 @@
 
     peringatanSimpan($('ha-simpan-warn'), gagal);
     $('btn-wa-hasil').hidden = !CFG.ENABLE_WA_BUTTON;
+
+    // Sesi tuntas dan KKM tercapai. Buang progres supaya pemulihan tidak
+    // menawarkan sesi yang sudah masuk sheet — itu jalan menuju submit dobel.
+    // Sekaligus NIK dan nama tidak tertinggal di HP lebih lama dari perlunya.
+    //
+    // Kalau simpan ke server GAGAL, progres justru dipertahankan: ibu masih
+    // bisa membuka ulang dan mencoba kirim lagi, bukan kehilangan hasilnya.
+    if (!gagal) hapusProgres();
+
     showScreen('s8');
   }
 
@@ -1224,8 +1502,17 @@
     $('btn-progress-kembali').addEventListener('click', () => showScreen(state.screenSebelumnya));
 
     $('btn-selesai').addEventListener('click', () => location.reload());
-    $('btn-dup-awal').addEventListener('click', () => location.reload());
-    $('btn-lulus-bukan-saya').addEventListener('click', () => location.reload());
+    // Dua tautan ini artinya "ini bukan data saya". Progres di HP dibuang
+    // dulu, kalau tidak muat ulang halaman justru menawarkan data yang
+    // baru saja disangkal.
+    $('btn-dup-awal').addEventListener('click', () => {
+      hapusProgres();
+      location.reload();
+    });
+    $('btn-lulus-bukan-saya').addEventListener('click', () => {
+      hapusProgres();
+      location.reload();
+    });
 
     $('btn-kk-tonton').addEventListener('click', () => {
       state.materiIndex = 0;
@@ -1286,6 +1573,7 @@
   function init() {
     icons();
     initSplash();
+    initLanjut();
     initIdentifikasi();
     initKonfirmasi();
     initKuis();
@@ -1306,6 +1594,10 @@
     showScreen: showScreen,
     resetOffline: VT.resetOffline,
     soalSesi: soalSesi,
-    materiSesi: materiSesi
+    materiSesi: materiSesi,
+    // Progres tertunda — untuk menguji pemulihan tanpa harus menutup browser.
+    bacaProgres: bacaProgres,
+    simpanProgres: simpanProgres,
+    hapusProgres: hapusProgres
   };
 })();

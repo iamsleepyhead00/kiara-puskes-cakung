@@ -140,6 +140,9 @@ svg{flex-shrink:0}
   background:radial-gradient(circle,rgba(255,255,255,.09),transparent 70%);
 }
 .sp-logo{
+  /* position:relative wajib — dua cincin halo digambar sebagai
+     ::before/::after yang diposisikan terhadap kotak ini. */
+  position:relative;
   width:92px;height:92px;border-radius:30px;
   background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.26);
   backdrop-filter:blur(2px);
@@ -147,6 +150,34 @@ svg{flex-shrink:0}
   animation:naik .7s cubic-bezier(.22,.9,.3,1.1);
 }
 .sp-logo svg{width:42px;height:42px;stroke-width:1.5}
+
+/* ── Halo berdenyut ────────────────────────────────────────
+   Dua cincin menyebar keluar bergantian, memberi kesan gelombang USG.
+   Ikonnya sendiri TIDAK bergerak — dipilih klien 6 Agustus (varian 3).
+
+   Kedua cincin dimulai setelah 0,7 detik supaya tidak bertabrakan dengan
+   animasi masuk `naik` yang juga memakai transform. Cincin kedua diberi
+   jeda setengah siklus (1,65s) supaya alirannya terus-menerus, bukan
+   dua cincin muncul bersamaan.
+
+   Siklus 1,9s sengaja pendek: splash hanya tampil SPLASH_DURATION_MS
+   (2500ms) dan 700ms pertama sudah dipakai animasi masuk, jadi hanya
+   tersisa ±1,8 detik untuk terbaca. Kalau SPLASH_DURATION_MS dinaikkan,
+   siklus ini boleh diperlambat.
+
+   z-index -1 supaya cincin lewat di BELAKANG kotak, tidak menutupi ikon.
+   ───────────────────────────────────────────────────────── */
+.sp-logo::before,.sp-logo::after{
+  content:"";position:absolute;inset:-1px;border-radius:inherit;
+  z-index:-1;pointer-events:none;
+  animation:halo 1.9s .7s ease-out infinite;
+}
+.sp-logo::after{border:1.5px solid rgba(255,255,255,.55)}
+.sp-logo::before{border:1.5px solid rgba(255,255,255,.4);animation-delay:1.65s}
+@keyframes halo{
+  from{transform:scale(1);opacity:.6}
+  to{transform:scale(1.6);opacity:0}
+}
 .splash h1{
   font-family:var(--serif);font-size:var(--t-logo);font-weight:var(--w-serif);
   letter-spacing:.14em;line-height:1;z-index:1;
@@ -154,7 +185,19 @@ svg{flex-shrink:0}
 }
 .sp-div{display:flex;align-items:center;gap:11px;margin:20px 0 14px;width:150px;z-index:1;opacity:.75}
 .sp-div i:first-child,.sp-div i:last-child{flex:1;height:1px;background:rgba(255,255,255,.45)}
-.sp-div svg{width:13px;height:13px;stroke-width:1.6}
+/* Hati di antara dua garis. Lucide mengganti <i data-lucide="heart"> jadi
+   <svg>, jadi selektor ini kena tepat ke hatinya — dua elemen lain tetap
+   <i> karena hanya dipakai sebagai garis. */
+.sp-div svg{
+  width:13px;height:13px;stroke-width:1.6;
+  animation:detakHati 1.5s .7s ease-in-out infinite;
+}
+/* Berdenyut sekali lalu jeda — mengikuti irama detak, bukan kedipan rata. */
+@keyframes detakHati{
+  0%,100%{transform:scale(1)}
+  18%{transform:scale(1.28)}
+  36%{transform:scale(1)}
+}
 .splash p{
   font-size:var(--t-sm);line-height:var(--lh-longgar);
   opacity:.86;letter-spacing:.02em;z-index:1;font-weight:var(--w-normal);
@@ -761,4 +804,10 @@ select.fi option{color:var(--ink);font-weight:var(--w-normal)}
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.01ms !important;transition-duration:.01ms !important}
   .step.now{transform:none}
+  /* Halo splash dimatikan total, bukan cuma dipercepat. Dengan durasi
+     0,01ms dan `infinite`, cincinnya akan berkedip cepat — justru yang
+     paling dihindari pengguna yang menyetel hemat gerak. Ikon dan teks
+     splash tetap tampil normal. */
+  .sp-logo::before,.sp-logo::after{display:none}
+  .sp-div svg{transform:none}
 }

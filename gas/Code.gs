@@ -105,7 +105,8 @@ var BATAS = {
 /* Harus sama dengan KELURAHAN dan PUSKESMAS di config.js. */
 var KELURAHAN_SAH = [
   'Jatinegara', 'Rawa Terate', 'Pulo Gebang', 'Cakung Timur',
-  'Cakung Barat', 'Ujung Menteng', 'Penggilingan PIK', 'Penggilingan Elok'
+  'Cakung Barat', 'Ujung Menteng', 'Penggilingan PIK', 'Penggilingan Elok',
+  'Luar wilayah Cakung'   // ditambah 6 Agu — ibu luar wilayah boleh ikut kelas
 ];
 
 var PUSKESMAS_SAH = [
@@ -243,7 +244,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 6, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 7, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }

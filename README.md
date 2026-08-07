@@ -51,6 +51,49 @@ S1 Splash
 
 Sertifikat kelulusan **tidak ada** — lihat bagian "Yang Di-Hold".
 
+### Ikon dan animasi splash
+
+Ikon aplikasi memakai **Google Material Symbols `pregnant_woman` varian Rounded**,
+lisensi **Apache 2.0** — bebas komersial, boleh dimodifikasi, atribusi tidak
+diwajibkan. Sumber: [google/material-design-icons](https://github.com/google/material-design-icons).
+
+Dipasang sebagai SVG inline di **tiga tempat**: splash (S1) dan header (S2 dst)
+di `index.html`, plus `icons/favicon.svg`. Kalau diganti, ganti ketiganya.
+
+Bentuknya padat (fill), berbeda dari ikon Lucide lain di aplikasi yang bergaris.
+Itu disengaja: di favicon 16px garis tipis nyaris hilang.
+
+Splash memakai animasi **halo berdenyut** — dua cincin menyebar keluar dari
+kotak logo, plus hati kecil di bawah tulisan KIARA yang ikut berdenyut. Keduanya
+mulai setelah 0,7 detik supaya tidak bertabrakan dengan animasi masuk yang juga
+memakai `transform`. Siklusnya 1,9 detik, dibatasi `SPLASH_DURATION_MS` yang
+hanya 2500ms.
+
+Untuk pengguna yang menyetel `prefers-reduced-motion`, cincin halo
+**dimatikan total**, bukan dipercepat — aturan `animation-duration:.01ms` pada
+animasi `infinite` justru membuatnya berkedip cepat.
+
+### Melanjutkan sesi yang tertunda
+
+Kalau browser tertutup di tengah sesi, progres ibu tidak hilang. Saat aplikasi
+dibuka lagi muncul layar `s-lanjut` yang **menawarkan** melanjutkan dari tempat
+terakhir — termasuk progres nonton video, jadi video 68 MB tidak perlu ditonton
+ulang dari nol.
+
+| Aturan | Alasan |
+|---|---|
+| Berlaku **sehari saja** | Progres kemarin tidak dipulihkan — ibu datang untuk kunjungan baru |
+| **Ditawarkan**, tidak otomatis | Kalau HP-nya dipakai ibu lain, dia tidak terjebak melanjutkan data orang |
+| **Dihapus setelah tuntas** | Mencegah pemulihan memicu submit dobel |
+| Dipertahankan kalau simpan **gagal** | Ibu bisa buka ulang dan coba kirim lagi |
+
+Layar yang bisa dipulihkan: S3–S7 dan S12. Progres disimpan di `localStorage`
+kunci `kiara_progres_v1`. Soal tidak ikut disimpan — dibangun ulang dari
+`content.js`, dan kalau jumlahnya tidak lagi cocok progresnya dibuang supaya
+jawaban tidak bergeser.
+
+Uji dari console: `KIARA_DEBUG.bacaProgres()`, `KIARA_DEBUG.hapusProgres()`.
+
 ---
 
 ## Peta Kunjungan 1–4
@@ -255,8 +298,8 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 
 | # | Item | Lokasi | Kenapa penting |
 |---|---|---|---|
-| 1 | **Verifikasi 45 kunci jawaban** | `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | Berkas .docx puskesmas tidak memuat kunci. Yang dipakai sekarang kunci turunan. Kalau salah, skor dan status LULUS ikut salah. Lihat bawah. |
-| 2 | **Deploy versi baru Apps Script** | `gas/Code.gs` | `POIN_PER_SOAL` sudah 20 → 10. Kalau belum di-deploy, endpoint menolak skor 10/30/50/70/90 dan sebagian pasien gagal simpan. |
+| 1 | **Deploy versi baru Apps Script** | `gas/Code.gs` | `KELURAHAN_SAH` sudah berisi "Luar wilayah Cakung" di repo tapi belum di deployment. Diuji langsung: `{"ok":false,"error":"Kelurahan tidak dikenal"}`. Ibu yang memilih opsi itu **gagal simpan**. Pages sudah nyala, jadi ini mendesak. Cek berhasil: `?action=ping` balas `versi: 7`. |
+| 2 | **Verifikasi 45 kunci jawaban** | `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | Berkas .docx puskesmas tidak memuat kunci. Yang dipakai sekarang kunci turunan. Kalau salah, skor dan status LULUS ikut salah. Lihat bawah. |
 | 3 | **Video untuk 2 topik** | `content.js` → `sesi[2].materi`, `sesi[3].materi` | K.3 "Mitos dan Fakta" dan K.4 "Tanda Bahaya" punya soal tanpa video. Pasien diuji tanpa materi. |
 | 4 | **Hosting video** | `.gitignore` | 186 MB semuanya lolos batas GitHub, jadi bisa ikut repo. Belum diputuskan: repo publik atau YouTube unlisted. |
 | 5 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. |

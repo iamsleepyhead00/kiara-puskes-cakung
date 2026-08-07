@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
@@ -22,7 +22,36 @@
   <!-- ══════════ S1 · SPLASH ══════════ -->
   <section class="screen on" id="s1">
     <div class="splash">
-      <div class="sp-logo"><i data-lucide="baby"></i></div>
+      <!-- Ikon ibu hamil — Google Material Symbols "pregnant_woman",
+           varian ROUNDED. Dipilih klien 6 Agustus setelah membandingkan
+           tujuh varian berdampingan, menggantikan ikon bayi.
+
+           LISENSI: Apache 2.0 — bebas komersial, boleh dimodifikasi,
+           atribusi tidak diwajibkan. Dicantumkan sebagai praktik baik.
+           SUMBER: github.com/google/material-design-icons
+
+           SVG inline, bukan data-lucide, karena Lucide tidak punya ikon
+           ibu hamil. Bentuknya PADAT (fill), berbeda dari ikon Lucide lain
+           yang bergaris — justru itu yang bikin dia tetap terbaca di
+           favicon 16px, tempat garis tipis nyaris hilang.
+
+           Percobaan menggambar sendiri lewat koordinat manual sudah
+           ditolak klien: kepala tidak menyambung ke badan dan bentuknya
+           terbaca seperti huruf "b". Ikon Google digambar desainer, jadi
+           proporsinya bisa dipertanggungjawabkan.
+
+           viewBox "0 -960 960 960" itu sistem koordinat Material Symbols,
+           bukan salah tulis. Isinya sudah terpusat, jadi CSS ukuran yang
+           sudah ada tetap berlaku.
+
+           Sama dengan header di bawah DAN icons/favicon.svg — kalau salah
+           satu diubah, ubah ketiganya. -->
+      <div class="sp-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"
+             fill="currentColor" aria-hidden="true">
+          <path d="M400-120v-160h-40q-17 0-28.5-11.5T320-320v-240q0-50 35-85t85-35q50 0 85 35t35 85q36 15 58 48t22 72v120q0 17-11.5 28.5T600-280h-80v160q0 17-11.5 28.5T480-80h-40q-17 0-28.5-11.5T400-120Zm40-600q-33 0-56.5-23.5T360-800q0-33 23.5-56.5T440-880q33 0 56.5 23.5T520-800q0 33-23.5 56.5T440-720Z"/>
+        </svg>
+      </div>
       <h1>KIARA</h1>
       <div class="sp-div"><i></i><i data-lucide="heart"></i><i></i></div>
       <p>Kelas Ibu Hamil Digital<br>Puskesmas Kecamatan Cakung</p>
@@ -30,10 +59,55 @@
     </div>
   </section>
 
+  <!-- ══════════ S-LANJUT · TAWARAN LANJUT SESI TERTUNDA ══════════
+       Muncul hanya kalau ada progres hari ini yang tersimpan di HP ini —
+       misalnya browser tertutup di tengah materi. Sengaja MENAWARKAN,
+       bukan memulihkan otomatis: kalau HP-nya dipakai ibu lain, dia
+       tidak boleh terjebak melanjutkan data orang.
+
+       Id-nya sengaja bukan "s13" supaya tidak tertukar dengan layar
+       sertifikat yang sudah dicabut. -->
+  <section class="screen scroll" id="s-lanjut">
+    <header class="ah">
+      <div class="ah-i"><i data-lucide="history"></i></div>
+      <div class="ah-t"><strong>KIARA</strong><span>Melanjutkan Sesi</span></div>
+    </header>
+    <div class="body">
+      <div class="edge">
+        <div class="edge-ic"><i data-lucide="bookmark-check"></i></div>
+        <div class="edge-t">Ada Sesi yang Belum Selesai</div>
+        <div class="edge-s" id="lj-sub">-</div>
+      </div>
+      <div class="datalist">
+        <div class="drow"><span>Nama</span><b id="lj-nama">-</b></div>
+        <div class="drow"><span>NIK</span><b id="lj-nik">-</b></div>
+        <div class="drow"><span>Sesi</span><b id="lj-sesi">-</b></div>
+        <div class="drow"><span>Berhenti di</span><b id="lj-posisi">-</b></div>
+      </div>
+      <div class="center small muted mb-sm">
+        Ibu bisa lanjut dari tempat terakhir,<br>
+        <b class="c-rose">tidak perlu mengulang dari awal</b>
+      </div>
+      <button class="btn p" id="btn-lanjut-progres">
+        <i data-lucide="play"></i>Lanjutkan Sesi Saya
+      </button>
+      <span class="tlink" id="btn-lanjut-baru">
+        <i data-lucide="user-x"></i><span>Bukan saya / mulai dari awal</span>
+      </span>
+    </div>
+  </section>
+
   <!-- ══════════ S2 · IDENTIFIKASI PASIEN ══════════ -->
   <section class="screen scroll" id="s2">
     <header class="ah">
-      <div class="ah-i"><i data-lucide="baby"></i></div>
+      <!-- Google Material Symbols "pregnant_woman" Rounded, Apache 2.0.
+           Sama dengan splash di atas dan icons/favicon.svg. -->
+      <div class="ah-i">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"
+             fill="currentColor" aria-hidden="true">
+          <path d="M400-120v-160h-40q-17 0-28.5-11.5T320-320v-240q0-50 35-85t85-35q50 0 85 35t35 85q36 15 58 48t22 72v120q0 17-11.5 28.5T600-280h-80v160q0 17-11.5 28.5T480-80h-40q-17 0-28.5-11.5T400-120Zm40-600q-33 0-56.5-23.5T360-800q0-33 23.5-56.5T440-880q33 0 56.5 23.5T520-800q0 33-23.5 56.5T440-720Z"/>
+        </svg>
+      </div>
       <div class="ah-t"><strong>KIARA</strong><span>Edukasi Ibu Hamil • Puskesmas Cakung</span></div>
     </header>
     <div class="body">
@@ -453,9 +527,12 @@
   </div>
 </div>
 
-<script src="config.js?v=7"></script>
+<!-- config.js?v=10 — v=8 dan v=9 sempat menyajikan OFFLINE_MODE yang
+     berbeda selama uji lokal, jadi angkanya dinaikkan supaya cache
+     browser tidak ambigu. -->
+<script src="config.js?v=10"></script>
 <script src="content.js?v=7"></script>
 <script src="visit-tracker.js?v=4"></script>
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>

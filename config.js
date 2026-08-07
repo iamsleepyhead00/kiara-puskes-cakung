@@ -21,6 +21,10 @@ window.KIARA_CONFIG = {
   // ── LOKASI ─────────────────────────────────────────────────
   // Kelurahan dan Puskesmas sekarang DUA field berbeda.
   // Di FORMAT KIARA keduanya nyampur di bawah label "Alamat".
+  // ⚠️ Daftar ini DIDUPLIKASI di `KELURAHAN_SAH` pada gas/Code.gs — endpoint
+  //    menolak nilai yang tidak ada di daftar resminya. Kalau menambah opsi
+  //    di sini tanpa mengubah Code.gs LALU deploy versi baru, pasien yang
+  //    memilih opsi baru akan gagal simpan.
   KELURAHAN: [
     'Jatinegara',
     'Rawa Terate',
@@ -29,7 +33,11 @@ window.KIARA_CONFIG = {
     'Cakung Barat',
     'Ujung Menteng',
     'Penggilingan PIK',
-    'Penggilingan Elok'
+    'Penggilingan Elok',
+    // Ditambah 6 Agu atas permintaan puskesmas — ibu dari luar wilayah
+    // tetap boleh ikut kelas. Ditaruh paling bawah supaya kelurahan Cakung
+    // tetap jadi pilihan pertama yang terlihat.
+    'Luar wilayah Cakung'
   ],
 
   // 9 opsi. Dokumen menulis "Pustu Cakung barat" dua kali — duplikat dihapus.
@@ -139,8 +147,19 @@ window.KIARA_CONFIG = {
   // true  = jalan tanpa backend, riwayat disimpan di localStorage HP
   // false = tersambung ke Google Sheets lewat SHEETS_ENDPOINT
   //
-  // Sudah false — endpoint aktif dan sudah diuji tulis-baca.
-  // Kembalikan ke true kalau perlu uji alur tanpa mengotori sheet.
+  // false = tersambung ke Google Sheets lewat SHEETS_ENDPOINT.
+  //
+  // Nilai ini yang benar untuk produksi. Jangan tinggalkan `true` di repo:
+  // hasil pasien hanya tersimpan di HP-nya dan TIDAK PERNAH sampai ke
+  // bidan — gagal tanpa suara sama sekali.
+  //
+  // Untuk uji alur tanpa mengotori sheet puskesmas, setel `true`
+  // SEMENTARA, lalu bersihkan riwayat palsu dari console dengan
+  // KIARA_DEBUG.resetOffline(). Saat `true`, peringatan
+  // "OFFLINE_MODE masih true" muncul di console setiap aplikasi dibuka.
+  //
+  // Alternatif yang lebih aman saat menguji dengan nilai false: pakai NIK
+  // 9999999999999999, karena hanya NIK itu yang disapu hapusUji().
   OFFLINE_MODE: false,
 
   SPLASH_DURATION_MS: 2500

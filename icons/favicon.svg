@@ -1,20 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Favicon KIARA — ikon bayi, sama dengan yang dipakai di splash screen
-  (Lucide "baby"). Digambar sebagai kotak berisi warna, bukan garis di atas
-  latar transparan: di ukuran 16px garis tipis nyaris tidak terlihat, dan
-  tab browser bisa berlatar terang maupun gelap.
+  Favicon KIARA — ibu hamil. Sama dengan yang dipakai di splash screen dan
+  header aplikasi. Menggantikan ikon bayi atas permintaan puskesmas
+  6 Agustus 2026.
+
+  IKON   : Google Material Symbols "pregnant_woman", varian ROUNDED
+           (dipilih klien sebagai varian 7 dari _pratinjau-ikon-2.html)
+  LISENSI: Apache License 2.0 — bebas dipakai komersial, boleh dimodifikasi,
+           atribusi TIDAK diwajibkan. Google menyebut "we'd love attribution
+           but it's not required". Dicantumkan di sini sebagai praktik baik.
+  SUMBER : https://github.com/google/material-design-icons
+
+  Kenapa bukan gambar sendiri: percobaan menggambar ibu hamil lewat
+  koordinat manual ditolak klien — kepala tidak menyambung ke badan dan
+  keseluruhannya terbaca seperti huruf "b", bukan orang. Ikon Google
+  digambar desainer, jadi proporsinya bisa dipertanggungjawabkan.
+
+  Kenapa bentuk padat, bukan garis seperti ikon Lucide lain di aplikasi:
+  di 16px garis tipis nyaris tidak terlihat. Bidang penuh tetap terbaca.
+
+  Dibuat sebagai kotak berisi warna, bukan garis di atas latar transparan,
+  karena tab browser bisa berlatar terang maupun gelap.
 
   Warna #b03a5b = aksen plum-wine yang dipakai di seluruh aplikasi.
+
+  Catatan teknis: viewBox "0 -960 960 960" itu sistem koordinat Material
+  Symbols, bukan salah tulis. Dipasang lewat <svg> bersarang supaya
+  penskalaannya diurus preserveAspectRatio, bukan hitungan transform manual.
+
+  ⚠️ Ikon ini ada di TIGA tempat: file ini + dua tempat di index.html
+     (splash dan header). Kalau diganti, ganti ketiganya.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <rect width="32" height="32" rx="8" fill="#b03a5b"/>
-  <g transform="translate(4.5 4.5) scale(0.958)"
-     fill="none" stroke="#fff5f0" stroke-width="2.2"
-     stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/>
-    <path d="M15 12h.01"/>
-    <path d="M19.38 6.813A9 9 0 0 1 20.8 10.2a2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>
-    <path d="M9 12h.01"/>
-  </g>
+  <svg x="5" y="5" width="22" height="22" viewBox="0 -960 960 960" fill="#fff5f0">
+    <path d="M400-120v-160h-40q-17 0-28.5-11.5T320-320v-240q0-50 35-85t85-35q50 0 85 35t35 85q36 15 58 48t22 72v120q0 17-11.5 28.5T600-280h-80v160q0 17-11.5 28.5T480-80h-40q-17 0-28.5-11.5T400-120Zm40-600q-33 0-56.5-23.5T360-800q0-33 23.5-56.5T440-880q33 0 56.5 23.5T520-800q0 33-23.5 56.5T440-720Z"/>
+  </svg>
 </svg>
