@@ -64,7 +64,9 @@ Jangan diubah tanpa instruksi baru.
 
 | Hal | Keputusan |
 |---|---|
-| Sesi aktif | **hanya 1–4** = kunjungan K.1–K.4 di folder puskesmas |
+| Panjang program | **10 pertemuan** (`TOTAL_SESI`). LULUS baru terbit setelah kunjungan ke-10 |
+| Sesi yang bisa dijalankan | **1–4** (`SESI_TERSEDIA`) = kunjungan K.1–K.4. Sesi 5–10 terdaftar tapi materi & soalnya kosong → layar "belum tersedia" |
+| Dropdown koreksi sesi | ikut `SESI_TERSEDIA` (1–4), bukan `TOTAL_SESI` |
 | Sumber konten | folder **DATA BASE VIDEO** (5 Agu). Menggantikan bank soal buku fasilitator + paket video TTD/MMS |
 | Topik per kunjungan | **2 topik**, masing-masing 1 video + 1 set 5 soal |
 | Soal per kunjungan | **10 soal** Benar/Salah (2 topik × 5), digabung jadi satu pre-test dan satu post-test |
@@ -83,6 +85,115 @@ Jangan diubah tanpa instruksi baru.
 ---
 
 ## 4. Yang dikerjakan di sesi ini
+
+### Revisi ronde 2 — 7 Agustus
+
+Semuanya temuan klien saat mencoba aplikasi di HP lewat GitHub Pages.
+
+**Video tidak bisa layar penuh.** Penyebabnya anti-skip: `v.controls = !CFG.ANTI_SKIP`
+mematikan kontrol bawaan, dan tombol layar penuh itu bagian dari kontrol bawaan.
+
+Solusinya bukan menghidupkan kontrol bawaan — itu mengembalikan progress bar
+dan anti-skip jadi sia-sia. Ditambah tombol sendiri (`#mt-fs`) yang
+me-fullscreen **kotak pembungkus** `.vid`, bukan elemen `<video>`. Kalau
+elemen videonya yang di-fullscreen, browser memunculkan pemutar bawaannya
+lengkap dengan seek bar.
+
+| Detail | Alasan |
+|---|---|
+| Bar progres tetap tampil di layar penuh | ibu masih perlu melihat berapa yang sudah ditonton |
+| Coba `screen.orientation.lock('landscape')` | video 16:9 di HP tegak banyak kotak hitamnya. Banyak browser menolak; kegagalan diabaikan |
+| Dengarkan `fullscreenchange` | ibu bisa keluar lewat tombol Back atau Esc — ikon harus ikut keadaan sebenarnya |
+| Tombol disembunyikan kalau Fullscreen API tidak ada | **Safari iOS tidak mendukung fullscreen elemen sembarang**, hanya `<video>`. Lebih baik tidak ada tombol daripada tombol yang menghadirkan seek bar |
+
+**Label "MATERI n" menutupi video.** `.vlab` dipasang `position:absolute` di
+pojok kiri atas dan menempel permanen — di materi Gizi 1000 HPK dia menimpa
+judul yang tertulis di dalam videonya. Sekarang memudar hilang begitu video
+diputar (`.vid.playing .vlab`). Nomor materi tetap terlihat di `mt-count`
+(kanan atas header) dan di daftar materi, jadi tidak ada informasi yang hilang.
+
+**Sesi jadi 1–10.** Klien: programnya memang 10 pertemuan, jangan berpura-pura
+4. Tapi materi dan soal baru ada untuk K.1–K.4.
+
+Dipisah jadi dua angka, dan bedanya penting:
+
+| Konfigurasi | Arti |
+|---|---|
+| `TOTAL_SESI: 10` | panjang program sebenarnya. Semua tampilan menyebut "dari 10", LULUS baru terbit setelah kunjungan ke-10 |
+| `SESI_TERSEDIA: 4` | berapa sesi yang benar-benar bisa dijalankan aplikasi |
+
+Sesi 5–10 terdaftar di `content.js` dengan judul dan pokok bahasan, tapi
+`materi` dan `setSoal` kosong. Ibu yang sampai di sesi 5 melihat layar baru
+**`s-belum`** ("Materi Belum Tersedia"), bukan pre-test nol soal — tanpa
+penjagaan itu `soalSesi(5)` mengembalikan array kosong, skornya 0, dan
+aplikasi terlihat rusak.
+
+Dropdown koreksi sesi difilter `SESI_TERSEDIA`, bukan `TOTAL_SESI` — petugas
+tidak boleh bisa memilih sesi yang soalnya kosong. Validasi di
+`simpanKoreksi()` ikut, jadi tetap aman walau HTML-nya diotak-atik.
+
+⚠️ **Judul sesi 5–10 perlu dikonfirmasi.** Diambil dari nama slide deck
+`MATERI 1-10 KIARA.zip` kiriman puskesmas — sumbernya sah, tapi penomoran deck
+itu belum tentu sejajar dengan penomoran K.1–K.4. K.1 berisi Tanda Kehamilan +
+1000 HPK, sementara slide 1 berjudul "Kehamilan yang Sehat".
+
+**Kecepatan — "mencari riwayat" dan "merekam hasil" terasa lama.**
+
+Penyebab utamanya di backend. `handleSave` membaca seluruh sheet **empat kali**
+untuk satu penyimpanan:
+
+| Pemanggil | Yang dibaca |
+|---|---|
+| `bedaHeader(sh)` | baris header |
+| `ambilData(sh)` | seluruh data |
+| `nomorBerikut(sh)` | seluruh data **lagi** |
+| `handleLookup()` di akhir | seluruh data **lagi** |
+
+Setiap panggilan Sheets dari Apps Script itu perjalanan jaringan, bukan
+operasi memori. Sekarang: header dan data dibaca sekali jadi satu
+`getValues()`, nomor urut dari data yang sudah di memori, riwayat disusun dari
+memori dan ditambal dengan nilai yang baru ditulis. Yang di-update juga
+dibatch — `POST` dan `STATUS` bersebelahan jadi satu `setValues`. Throttle
+pakai `getProperties()` sekali, bukan `getProperty()` dua kali.
+
+**Hasilnya: 4 pembacaan + 3 tulisan → 1 pembacaan + 1 tulisan.**
+
+Helper baru: `bedaHeaderDari(header)` dan `riwayatDari(data, nik)` menerima
+data yang sudah dibaca. `nomorBerikut(sh)` diganti `nomorBerikutDari(data)`.
+
+Di frontend, kemenangan terbesarnya **pra-ambil riwayat**. NIK itu kolom
+pertama — begitu 16 digitnya lengkap, pencarian jalan di belakang layar
+sementara ibu masih mengisi nama, HP, alamat, kelurahan, puskesmas. Itu
+puluhan detik. Saat SUBMIT ditekan hasilnya biasanya sudah siap.
+
+Yang dijaga: hasil hanya dipakai kalau NIK-nya masih sama (ibu bisa
+mengoreksi), pra-ambil yang masih berjalan **ditunggu** bukan diulang, dan
+kegagalannya ditelan — `jalankanLookup()` mencoba lagi normal dan pesan
+errornya muncul di tempat yang benar.
+
+Ditambah `VT.pemanasan()` — ping murah untuk membangunkan container Apps
+Script yang kena cold start. Dipanggil dua kali: saat splash (untuk pencarian
+riwayat) dan saat post-test mulai (untuk penyimpanan, yang terjadi ±1 menit
+kemudian saat container bisa sudah dingin lagi). Tidak jalan saat
+`OFFLINE_MODE`.
+
+Yang berubah:
+
+| File | Perubahan |
+|---|---|
+| `index.html` | tombol `#mt-fs`, layar `s-belum`, versi asset |
+| `style.css` | `.vfs`, aturan `:fullscreen`, `.vid.playing .vlab` |
+| `app.js` | `toggleFullscreen()`, `fullscreenDidukung()`, `sedangFullscreen()`, `segarkanIkonFullscreen()` |
+| `app.js` | `praAmbil` + `mulaiPraAmbil()` + `ambilRiwayat()`, dipakai `jalankanLookup()` |
+| `app.js` | `tampilBelumTersedia()`, dropdown koreksi difilter, diagnostik hanya memeriksa sesi tersedia |
+| `config.js` | `TOTAL_SESI: 4 → 10`, `SESI_TERSEDIA: 4` baru |
+| `content.js` | sesi 5–10 ditambahkan, `materi` dan `setSoal` kosong |
+| `visit-tracker.js` | `pemanasan()` baru |
+| `gas/Code.gs` | `handleSave` dirampingkan, `riwayatDari`/`bedaHeaderDari`/`nomorBerikutDari`, throttle, `SESI_DEFAULT: 10`, `versi: 8` |
+
+Verifikasi: 71 uji lolos — termasuk sesi 5–10 memang nol soal, LULUS baru di
+sesi 10, `handleSave` tinggal satu `getValues()`, dan anti-skip serta
+pemulihan progres tidak tersentuh.
 
 ### Revisi ronde 1 — 6 Agustus
 
@@ -381,7 +492,15 @@ masih menunggu verifikasi bidan), tapi harus dibereskan sebelum dipakai:
 paste `gas/Code.gs` → Deploy → Manage deployments → Edit → New version.
 Cek berhasil: `?action=ping` balas `versi: 7`.
 
-Deployment sekarang masih balas `versi: 5`.
+Deployment sekarang masih balas `versi: 5`. Repo sudah `versi: 8`.
+
+Sejak 7 Agustus deploy ini membawa dua hal, bukan cuma kelurahan:
+
+1. `KELURAHAN_SAH` + "Luar wilayah Cakung"
+2. **Perampingan `handleSave`** — 4 pembacaan sheet penuh jadi 1. Ini yang
+   bikin "Menyimpan hasil..." lama, dan tidak ada efeknya sampai di-deploy.
+   Perbaikan sisi frontend (pra-ambil riwayat, pemanasan container) sudah
+   jalan begitu di-push, tidak menunggu deploy.
 
 ### 5.4 Duplikat media 160 MB
 
@@ -417,7 +536,7 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **MENDESAK.** Pages sudah nyala dan opsi "Luar wilayah Cakung" sudah tampil di dropdown, tapi deployment masih menolaknya — diuji langsung, balasannya `{"ok":false,"error":"Kelurahan tidak dikenal"}`. Cek berhasil: `?action=ping` balas `versi: 7`. Lihat 5.3 |
+| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **MENDESAK, dan sekarang membawa dua hal.** (a) Opsi "Luar wilayah Cakung" masih ditolak deployment lama — diuji langsung: `{"ok":false,"error":"Kelurahan tidak dikenal"}`. (b) Perampingan `handleSave` (4 pembacaan sheet → 1) tidak ada efeknya sampai di-deploy. Cek berhasil: `?action=ping` balas `versi: 8`. Lihat 5.3 |
 | 2 | **Kirim `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` ke bidan** | blocker utama, lihat 5.1 |
 | 3 | Jalankan `hapusUji()` di Apps Script | Ada baris uji NIK `9999999999999999` dari uji tulis-baca 7 Agu |
 | 4 | Jawab 3 revisi yang ditunda | lihat bagian 6 no. 8–10 |
@@ -501,8 +620,8 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 - Google kadang membalas halaman HTML "Halaman Tidak Ditemukan" alih-alih JSON.
   Itu gangguan sesaat, ulangi requestnya
 - Naikkan `?v=` di `index.html` setiap JS/CSS berubah. Sekarang:
-  `style.css?v=9`, `config.js?v=8`, `content.js?v=7`, `visit-tracker.js?v=4`,
-  `app.js?v=17`
+  `style.css?v=11`, `config.js?v=11`, `content.js?v=8`, `visit-tracker.js?v=5`,
+  `app.js?v=19`
 - **Jangan mengarang konten kesehatan.** Kunci jawaban yang terlihat keliru
   ditulis apa adanya lalu ditandai `perluKonfirmasi`
 - Jangan pakai identitas git kantor untuk repo pribadi user
@@ -516,7 +635,7 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 
 | File | Isi |
 |---|---|
-| `index.html` | 13 layar (S1–S12) + `s-lanjut` (tawaran melanjutkan sesi tertunda), markup semua screen |
+| `index.html` | 12 layar (S1–S12) + `s-lanjut` (tawaran melanjutkan sesi tertunda) + `s-belum` (sesi 5–10 belum tersedia) |
 | `icons/favicon.svg` | ikon ibu hamil (Material Symbols Rounded) dalam kotak plum |
 | `style.css` | palet plum-wine `#b03a5b`, 9 token ukuran teks (`--t-micro` … `--t-logo`) |
 | `config.js` | satu-satunya file yang perlu diubah saat deploy |

@@ -51,6 +51,71 @@ S1 Splash
 
 Sertifikat kelulusan **tidak ada** — lihat bagian "Yang Di-Hold".
 
+### Panjang program: 10 sesi, baru 4 yang bisa dijalankan
+
+Dua angka di `config.js`, dan bedanya penting:
+
+| Konfigurasi | Arti |
+|---|---|
+| `TOTAL_SESI: 10` | panjang program sebenarnya. Semua tampilan menyebut "dari 10", status LULUS baru terbit setelah kunjungan ke-10 |
+| `SESI_TERSEDIA: 4` | berapa sesi yang benar-benar bisa dijalankan aplikasi |
+
+Sesi 5–10 terdaftar di `content.js` dengan judul dan pokok bahasan, tapi
+`materi` dan `setSoal` kosong — puskesmas baru mengirim K.1–K.4. Ibu yang
+riwayatnya sampai di sesi 5 melihat layar `s-belum` ("Materi Belum Tersedia"),
+bukan pre-test nol soal.
+
+Dropdown koreksi sesi difilter `SESI_TERSEDIA`, jadi petugas tidak bisa memilih
+sesi yang soalnya kosong.
+
+Untuk menghidupkan satu sesi: isi `materi` dan `setSoal`-nya di `content.js`
+(harus berjumlah `SOAL_PER_SESI` = 10 soal), lalu naikkan `SESI_TERSEDIA`.
+
+⚠️ Judul sesi 5–10 dari nama slide deck `MATERI 1-10 KIARA.zip` kiriman
+puskesmas — sumbernya sah, tapi penomoran deck itu belum tentu sejajar dengan
+penomoran K.1–K.4. Perlu dikonfirmasi.
+
+### Layar penuh video
+
+Kontrol bawaan video dimatikan oleh `ANTI_SKIP` karena membawa progress bar
+yang bisa digeser — dan tombol layar penuh ikut hilang bersamanya. Diganti
+tombol sendiri (`#mt-fs`) yang me-fullscreen **kotak pembungkus** `.vid`, bukan
+elemen `<video>`. Kalau elemen videonya yang di-fullscreen, browser
+memunculkan pemutar bawaannya lengkap dengan seek bar.
+
+Bar progres tetap tampil di layar penuh. Aplikasi juga mencoba memutar layar ke
+lanskap; banyak browser menolak dan kegagalannya diabaikan.
+
+⚠️ **Safari iOS tidak mendukung fullscreen untuk elemen sembarang**, hanya
+untuk `<video>`. Di sana tombolnya tidak muncul — itu pilihan sadar, lebih baik
+tidak ada tombol daripada tombol yang menghadirkan seek bar.
+
+### Kecepatan
+
+Tiga hal yang menentukan aplikasi ini terasa cepat atau lambat:
+
+**1. `handleSave` di backend.** Dulu membaca seluruh sheet empat kali untuk satu
+penyimpanan (`bedaHeader`, `ambilData`, `nomorBerikut`, lalu `handleLookup` di
+akhir). Setiap panggilan Sheets dari Apps Script itu perjalanan jaringan.
+Sekarang satu `getValues()` untuk header + data, nomor urut dan riwayat dihitung
+dari memori. Tulisan juga dibatch. Hasilnya 4 pembacaan + 3 tulisan → 1 + 1.
+
+**2. Pra-ambil riwayat.** NIK adalah kolom pertama. Begitu 16 digitnya lengkap,
+pencarian riwayat jalan di belakang layar sementara ibu masih mengisi lima
+kolom lainnya. Saat SUBMIT ditekan hasilnya biasanya sudah siap. Hasil hanya
+dipakai kalau NIK-nya masih sama; kegagalannya ditelan dan
+`jalankanLookup()` mencoba lagi normal.
+
+**3. `VT.pemanasan()`.** Ping murah untuk membangunkan container Apps Script
+yang kena cold start. Dipanggil saat splash dan saat post-test mulai — yang
+kedua penting karena penyimpanan terjadi ±1 menit kemudian, saat container bisa
+sudah dingin lagi. Tidak jalan saat `OFFLINE_MODE`.
+
+Kalau `handleSave` masih terasa lambat setelah semua ini, yang perlu diperiksa
+pertama: **apakah `Code.gs` sudah di-deploy?** Perbaikan backend tidak ada
+efeknya sampai deployment diperbarui. Cek dengan `?action=ping` — harus balas
+`versi: 8`.
+
 ### Ikon dan animasi splash
 
 Ikon aplikasi memakai **Google Material Symbols `pregnant_woman` varian Rounded**,
@@ -298,7 +363,7 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 
 | # | Item | Lokasi | Kenapa penting |
 |---|---|---|---|
-| 1 | **Deploy versi baru Apps Script** | `gas/Code.gs` | `KELURAHAN_SAH` sudah berisi "Luar wilayah Cakung" di repo tapi belum di deployment. Diuji langsung: `{"ok":false,"error":"Kelurahan tidak dikenal"}`. Ibu yang memilih opsi itu **gagal simpan**. Pages sudah nyala, jadi ini mendesak. Cek berhasil: `?action=ping` balas `versi: 7`. |
+| 1 | **Deploy versi baru Apps Script** | `gas/Code.gs` | Dua hal sekaligus. (a) `KELURAHAN_SAH` sudah berisi "Luar wilayah Cakung" di repo tapi belum di deployment — diuji langsung: `{"ok":false,"error":"Kelurahan tidak dikenal"}`, ibu yang memilih opsi itu **gagal simpan**. (b) Perampingan `handleSave` (4 pembacaan sheet → 1) tidak ada efeknya sampai di-deploy. Cek berhasil: `?action=ping` balas `versi: 8`. |
 | 2 | **Verifikasi 45 kunci jawaban** | `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | Berkas .docx puskesmas tidak memuat kunci. Yang dipakai sekarang kunci turunan. Kalau salah, skor dan status LULUS ikut salah. Lihat bawah. |
 | 3 | **Video untuk 2 topik** | `content.js` → `sesi[2].materi`, `sesi[3].materi` | K.3 "Mitos dan Fakta" dan K.4 "Tanda Bahaya" punya soal tanpa video. Pasien diuji tanpa materi. |
 | 4 | **Hosting video** | `.gitignore` | 186 MB semuanya lolos batas GitHub, jadi bisa ikut repo. Belum diputuskan: repo publik atau YouTube unlisted. |

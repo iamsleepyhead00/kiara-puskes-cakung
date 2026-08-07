@@ -139,6 +139,25 @@ window.VisitTracker = (function () {
     return res.json();
   }
 
+  /**
+   * Panggilan sangat murah ke endpoint, hasilnya dibuang.
+   *
+   * Gunanya membangunkan container Apps Script. Panggilan pertama setelah
+   * container menganggur kena cold start dan itu bisa memakan detik-detik
+   * pertama — bukan karena datanya banyak, tapi karena skripnya baru dimuat.
+   * Dengan memanggil ini lebih dulu, permintaan sungguhan mendarat di
+   * container yang sudah hangat.
+   *
+   * Sengaja tidak mengembalikan apa-apa dan menelan semua kegagalan:
+   * pemanasan itu bonus, bukan syarat. Kalau gagal, alurnya tetap jalan.
+   */
+  function pemanasan() {
+    if (CFG.OFFLINE_MODE || !CFG.SHEETS_ENDPOINT) return;
+    try {
+      fetch(CFG.SHEETS_ENDPOINT + '?action=ping', { method: 'GET' }).catch(() => {});
+    } catch (e) { /* diabaikan */ }
+  }
+
   /* ── API PUBLIK ────────────────────────────────────────────── */
 
   /** Cari riwayat pasien berdasarkan NIK. Bentuk hasilnya selalu sama. */
@@ -268,6 +287,7 @@ window.VisitTracker = (function () {
     lookup: lookup,
     resolve: resolve,
     save: save,
+    pemanasan: pemanasan,
     resetOffline: resetOffline
   };
 })();

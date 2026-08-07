@@ -460,7 +460,42 @@ select.fi option{color:var(--ink);font-weight:var(--w-normal)}
   font-size:var(--t-micro);font-weight:var(--w-bold);
   letter-spacing:var(--ls-label);text-transform:uppercase;
   padding:5px 11px;border-radius:99px;
+  transition:opacity .25s ease;
 }
+/* Label "MATERI n" menghilang begitu video diputar. Sebelum diputar dia
+   berguna sebagai penanda; saat video jalan dia justru menutupi isi video —
+   di materi Gizi 1000 HPK dia menimpa judul yang tertulis di videonya.
+   Nomor materi tetap terlihat di kanan atas header (mt-count) dan di
+   daftar materi di bawah, jadi tidak ada informasi yang hilang. */
+.vid.playing .vlab{opacity:0;pointer-events:none}
+
+/* ── TOMBOL LAYAR PENUH ────────────────────────────────────
+   Kontrol bawaan video dimatikan oleh ANTI_SKIP karena membawa progress
+   bar yang bisa digeser — dan tombol layar penuh ikut hilang bersamanya.
+   Tombol ini menggantikannya: yang di-fullscreen adalah kotak .vid, bukan
+   elemen <video>, sehingga pemutar bawaan tidak ikut muncul.
+   ───────────────────────────────────────────────────────── */
+.vfs{
+  position:absolute;top:10px;right:10px;z-index:3;
+  width:34px;height:34px;border-radius:10px;border:0;padding:0;
+  background:rgba(35,29,32,.62);backdrop-filter:blur(4px);color:#fff;
+  display:grid;place-items:center;cursor:pointer;
+  transition:background .18s ease;
+}
+.vfs:hover{background:rgba(35,29,32,.82)}
+.vfs svg{width:17px;height:17px;stroke-width:2}
+.vfs[hidden]{display:none}
+
+/* Saat layar penuh, kotak video melepas rasio 16:9 dan sudut membulatnya
+   supaya benar-benar mengisi layar. Bar progres tetap ikut tampil di
+   bawah — ibu masih bisa melihat berapa yang sudah ditonton. */
+.vid:fullscreen,.vid:-webkit-full-screen{
+  aspect-ratio:auto;width:100vw;height:100vh;
+  border-radius:0;margin:0;background:#000;box-shadow:none;
+}
+.vid:fullscreen .vshell video,.vid:-webkit-full-screen .vshell video{object-fit:contain}
+.vid:fullscreen .vlab,.vid:-webkit-full-screen .vlab{display:none}
+.vid:fullscreen .vfs,.vid:-webkit-full-screen .vfs{top:16px;right:16px}
 .vtitle{
   font-family:var(--serif);font-size:var(--t-lg);font-weight:var(--w-serif);
   line-height:var(--lh-rapat);color:var(--ink);letter-spacing:-.005em;

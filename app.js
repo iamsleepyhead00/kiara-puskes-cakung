@@ -318,6 +318,10 @@
      S1 · SPLASH
      ══════════════════════════════════════════════════════ */
   function initSplash() {
+    // Bangunkan container Apps Script selagi splash tampil. Pencarian
+    // riwayat berikutnya jadi tidak menanggung cold start.
+    VT.pemanasan();
+
     setTimeout(() => {
       // Ada progres hari ini yang belum tuntas? Tawarkan melanjutkan,
       // jangan langsung ke form data yang berarti mengulang dari awal.
@@ -452,6 +456,52 @@
   }
 
   /* ══════════════════════════════════════════════════════
+     PRA-AMBIL RIWAYAT
+
+     Dulu pencarian riwayat baru dimulai SETELAH pasien menekan SUBMIT dan
+     menjawab popup — jadi dia menatap "Mencari riwayat Ibu..." selama
+     seluruh perjalanan jaringan plus cold start Apps Script.
+
+     Padahal NIK adalah kolom PERTAMA yang diisi. Begitu 16 digitnya lengkap,
+     pencarian bisa dimulai di belakang layar sementara ibu masih mengisi
+     nama, HP, alamat, kelurahan, dan puskesmas — itu puluhan detik. Saat
+     SUBMIT ditekan, hasilnya biasanya sudah siap dan spinner hampir tidak
+     terlihat.
+
+     Yang dijaga:
+       • hasil hanya dipakai kalau NIK-nya masih sama — kalau pasien
+         mengoreksi NIK, hasil lama dibuang
+       • kegagalan pra-ambil TIDAK ditampilkan ke pasien; jalankanLookup()
+         akan mencoba lagi secara normal dan pesan errornya muncul di sana
+       • kalau pra-ambil masih berjalan saat dibutuhkan, hasilnya ditunggu —
+         bukan memicu permintaan kedua
+     ══════════════════════════════════════════════════════ */
+  let praAmbil = { nik: '', janji: null };
+
+  function mulaiPraAmbil(nik) {
+    if (!VT.isNIKValid(nik)) {
+      praAmbil = { nik: '', janji: null };
+      return;
+    }
+    if (praAmbil.nik === nik && praAmbil.janji) return;   // sudah jalan
+    praAmbil = {
+      nik: nik,
+      // .catch di sini penting: tanpa itu kegagalan pra-ambil jadi
+      // unhandled rejection di console, padahal sudah ada penanganannya.
+      janji: VT.lookup(nik).catch(() => null)
+    };
+  }
+
+  /** Hasil pra-ambil kalau ada dan cocok, kalau tidak baru panggil sekarang. */
+  async function ambilRiwayat(nik) {
+    if (praAmbil.nik === nik && praAmbil.janji) {
+      const hasil = await praAmbil.janji;
+      if (hasil) return hasil;
+    }
+    return VT.lookup(nik);
+  }
+
+  /* ══════════════════════════════════════════════════════
      S2 · IDENTIFIKASI
      ══════════════════════════════════════════════════════ */
   /**
@@ -496,7 +546,12 @@
       } else if (n === 16) {
         hint.className = 'fh ok';
         hint.querySelector('span').textContent = '16 digit — valid';
+        // Mulai cari riwayat sekarang, di belakang layar. Ibu masih punya
+        // lima kolom lagi untuk diisi — waktu itu yang dipakai.
+        mulaiPraAmbil(e.target.value);
       } else {
+        // NIK dikoreksi setelah lengkap → hasil pra-ambil tidak lagi sah.
+        praAmbil = { nik: '', janji: null };
         hint.className = 'fh err';
         hint.querySelector('span').textContent = n + ' dari 16 digit';
       }
@@ -577,7 +632,9 @@
   async function jalankanLookup() {
     busy(true, 'Mencari riwayat Ibu...');
     try {
-      const hasil = await VT.lookup(state.nik);
+      // Biasanya sudah selesai lewat pra-ambil sejak NIK dilengkapi, jadi
+      // baris ini langsung memberi hasil tanpa menunggu jaringan.
+      const hasil = await ambilRiwayat(state.nik);
       const r = VT.resolve(hasil, state.pernahPeriksa);
 
       state.riwayat = r.riwayat || [];
@@ -588,6 +645,11 @@
 
       if (r.kondisi === 'LULUS') return tampilSudahLulus();
       if (r.kondisi === 'DUPLIKAT') return tampilDuplikat(r);
+
+      // Programnya 10 pertemuan tapi aplikasi baru punya materi dan soal
+      // untuk SESI_TERSEDIA pertama. Tanpa penjagaan ini, ibu masuk
+      // pre-test tanpa soal sama sekali.
+      if (r.kunjunganKe > CFG.SESI_TERSEDIA) return tampilBelumTersedia(r);
 
       state.sesiKe = r.kunjunganKe;
       tampilKonfirmasi();
@@ -660,12 +722,17 @@
     // Koreksi sesi pakai dropdown, bukan input angka. Nilainya cuma 1–10,
     // jadi tidak perlu ada peluang salah ketik. Labelnya ikut topik sesi
     // supaya petugas bisa memilih dengan yakin, bukan menghitung sendiri.
+    // Hanya sesi yang benar-benar bisa dijalankan. Programnya 10 pertemuan,
+    // tapi menawarkan sesi 5–10 di sini berarti petugas bisa memilih sesi
+    // yang materi dan soalnya kosong — pre-test-nya nol soal.
     const sel = $('in-koreksi');
-    CONTENT.sesi.forEach((s) => {
-      const o = el('option', null, 'Sesi ' + s.ke + ' · ' + s.label);
-      o.value = String(s.ke);
-      sel.appendChild(o);
-    });
+    CONTENT.sesi
+      .filter((s) => s.ke <= CFG.SESI_TERSEDIA)
+      .forEach((s) => {
+        const o = el('option', null, 'Sesi ' + s.ke + ' · ' + s.label);
+        o.value = String(s.ke);
+        sel.appendChild(o);
+      });
 
     $('btn-lanjut-konfirmasi').addEventListener('click', mulaiPreTest);
     $('btn-buka-koreksi').addEventListener('click', bukaKoreksi);
@@ -690,8 +757,10 @@
   function simpanKoreksi() {
     const n = parseInt($('in-koreksi').value, 10);
     const hint = $('hint-koreksi');
-    // Dropdown seharusnya selalu bernilai sah — ini jaring pengaman saja.
-    if (isNaN(n) || n < 1 || n > CFG.TOTAL_SESI) {
+    // Dibatasi SESI_TERSEDIA, bukan TOTAL_SESI — sesi 5–10 terdaftar tapi
+    // soalnya kosong. Dropdown seharusnya sudah tidak menawarkannya; ini
+    // jaring pengaman saja.
+    if (isNaN(n) || n < 1 || n > CFG.SESI_TERSEDIA) {
       hint.className = 'fh err';
       hint.querySelector('span').textContent = 'Sesi belum dipilih';
       icons();
@@ -717,6 +786,12 @@
   }
 
   function mulaiPostTest() {
+    // Post-test berlangsung sekitar satu menit, lalu hasilnya disimpan.
+    // Container bisa sudah dingin lagi sejak pencarian riwayat tadi —
+    // dibangunkan sekarang supaya "Menyimpan hasil..." tidak menanggung
+    // cold start di atas waktu tulisnya.
+    VT.pemanasan();
+
     state.jawabanPost = new Array(state.soal.length).fill(null);
     state.qIndex = 0;
     state.percobaanPost += 1;
@@ -976,6 +1051,64 @@
     showScreen('s6');
   }
 
+  /* ══════════════════════════════════════════════════════
+     LAYAR PENUH
+
+     Kontrol bawaan video dimatikan oleh ANTI_SKIP — dan tombol layar penuh
+     ikut hilang bersamanya, karena dia bagian dari kontrol bawaan itu.
+
+     Yang di-fullscreen adalah KOTAK PEMBUNGKUS (.vid), bukan elemen
+     <video>-nya. Kalau elemen videonya yang di-fullscreen, browser
+     memunculkan pemutar bawaannya beserta progress bar — dan anti-skip
+     jadi sia-sia.
+
+     Kalau Fullscreen API tidak tersedia (Safari iOS tidak mendukung
+     fullscreen untuk elemen sembarang, hanya untuk <video>), tombolnya
+     disembunyikan. Lebih baik tidak ada tombol daripada tombol yang
+     menghadirkan seek bar.
+     ══════════════════════════════════════════════════════ */
+  function fullscreenDidukung() {
+    const el = $('mt-video');
+    return !!(el && (el.requestFullscreen || el.webkitRequestFullscreen));
+  }
+
+  function sedangFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function toggleFullscreen() {
+    const el = $('mt-video');
+    if (!el) return;
+
+    if (sedangFullscreen()) {
+      const keluar = document.exitFullscreen || document.webkitExitFullscreen;
+      if (keluar) keluar.call(document);
+      return;
+    }
+
+    const masuk = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!masuk) return;
+
+    // Promise-nya bisa ditolak (mis. gestur pengguna dianggap tidak sah).
+    // Ditangkap supaya tidak muncul unhandled rejection di console.
+    Promise.resolve(masuk.call(el)).then(() => {
+      // Video 16:9 di HP tegak akan banyak kotak hitam. Coba putar ke
+      // lanskap — banyak browser menolak, dan itu tidak masalah.
+      const o = window.screen && window.screen.orientation;
+      if (o && o.lock) o.lock('landscape').catch(() => {});
+    }).catch(() => {});
+  }
+
+  /** Samakan ikon tombol dengan keadaan sebenarnya. */
+  function segarkanIkonFullscreen() {
+    const btn = $('mt-fs');
+    if (!btn) return;
+    const penuh = sedangFullscreen();
+    btn.innerHTML = '<i data-lucide="' + (penuh ? 'minimize' : 'maximize') + '"></i>';
+    btn.setAttribute('aria-label', penuh ? 'Keluar dari layar penuh' : 'Layar penuh');
+    icons();
+  }
+
   /* ── Materi berupa video ───────────────────────────────── */
   function tampilVideo(m) {
     $('mt-video').hidden = false;
@@ -985,6 +1118,9 @@
     $('mt-play').classList.remove('hide');
     $('mt-bar').style.width = '0%';
     $('mt-time').textContent = '';
+    // Tombol layar penuh hanya untuk video, dan hanya kalau didukung.
+    $('mt-fs').hidden = !fullscreenDidukung();
+    segarkanIkonFullscreen();
     resetTonton();
     $('mt-gate-text').textContent = CFG.ANTI_SKIP
       ? 'Video tidak bisa dipercepat. Tombol lanjut aktif setelah ditonton ' +
@@ -1149,6 +1285,7 @@
   function tampilDokumen(m) {
     $('mt-video').hidden = true;
     $('mt-dok').hidden = false;
+    $('mt-fs').hidden = true;   // layar penuh hanya untuk video
 
     $('mt-dok-info').textContent = m.judul + (m.slide ? ' · ' + m.slide + ' halaman' : '');
     $('mt-dok-open').href = m.url;
@@ -1238,6 +1375,14 @@
 
   function initMateri() {
     $('mt-play').addEventListener('click', putarVideo);
+
+    $('mt-fs').addEventListener('click', toggleFullscreen);
+    // Ikut keadaan sebenarnya, bukan cuma saat tombol ditekan — pasien bisa
+    // keluar dari layar penuh lewat tombol Back atau Esc tanpa lewat tombol ini.
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach((ev) => {
+      document.addEventListener(ev, segarkanIkonFullscreen);
+    });
+
     $('btn-dok-selesai').addEventListener('click', bukaGate);
     $('btn-materi-lanjut').addEventListener('click', () => {
       if (state.materiIndex < state.materi.length - 1) {
@@ -1421,6 +1566,30 @@
     showScreen('s10');
   }
 
+  /**
+   * Sesi berikutnya di luar jangkauan aplikasi.
+   *
+   * Bukan kesalahan pasien dan bukan kegagalan sistem — programnya memang
+   * 10 pertemuan sementara materi yang dikirim puskesmas baru sampai
+   * kunjungan ke-SESI_TERSEDIA. Ditampilkan terang-terangan supaya tidak
+   * terlihat seperti aplikasi rusak.
+   */
+  function tampilBelumTersedia(r) {
+    const ke = r.kunjunganKe;
+    const sesi = sesiData(ke);
+    state.sesiKe = ke;
+    state.riwayat = r.riwayat || [];
+    state.tersimpan = true;   // jangan sampai layar ini memicu penyimpanan
+
+    $('bt-sub').innerHTML = 'Sesi ke-' + ke + ' dari ' + CFG.TOTAL_SESI +
+      '<br>belum bisa dijalankan di aplikasi';
+    $('bt-nama').textContent = state.nama || '-';
+    $('bt-sesi').textContent = 'Ke-' + ke + (sesi ? ' · ' + sesi.judul : '');
+    $('bt-selesai').textContent = state.riwayat.length + ' dari ' + CFG.TOTAL_SESI + ' sesi';
+
+    showScreen('s-belum');
+  }
+
   function tampilDuplikat(r) {
     const log = r.logHariIni;
     state.sesiKe = r.kunjunganKe;
@@ -1499,6 +1668,11 @@
 
     $('btn-lihat-progress').addEventListener('click', () => tampilProgress('s8'));
     $('btn-dup-progress').addEventListener('click', () => tampilProgress('s11'));
+    $('btn-bt-progress').addEventListener('click', () => tampilProgress('s-belum'));
+    $('btn-bt-awal').addEventListener('click', () => {
+      hapusProgres();
+      location.reload();
+    });
     $('btn-progress-kembali').addEventListener('click', () => showScreen(state.screenSebelumnya));
 
     $('btn-selesai').addEventListener('click', () => location.reload());
@@ -1549,13 +1723,24 @@
 
     // Jumlah soal per sesi harus sama dengan SOAL_PER_SESI, kalau tidak
     // skornya bukan kelipatan POIN_PER_SOAL dan endpoint akan menolaknya.
-    CONTENT.sesi.forEach((s) => {
-      const n = soalSesi(s.ke).length;
-      if (n !== CFG.SOAL_PER_SESI) {
-        p.push('Sesi ' + s.ke + ' punya ' + n + ' soal, seharusnya ' + CFG.SOAL_PER_SESI +
-               ' — skor akan ditolak endpoint');
-      }
-    });
+    //
+    // Hanya sesi yang bisa dijalankan yang diperiksa. Sesi 5–10 memang
+    // sengaja nol soal — yang menahannya SESI_TERSEDIA, bukan kelalaian.
+    CONTENT.sesi
+      .filter((s) => s.ke <= CFG.SESI_TERSEDIA)
+      .forEach((s) => {
+        const n = soalSesi(s.ke).length;
+        if (n !== CFG.SOAL_PER_SESI) {
+          p.push('Sesi ' + s.ke + ' punya ' + n + ' soal, seharusnya ' + CFG.SOAL_PER_SESI +
+                 ' — skor akan ditolak endpoint');
+        }
+      });
+
+    if (CFG.SESI_TERSEDIA < CFG.TOTAL_SESI) {
+      p.push('Sesi ' + (CFG.SESI_TERSEDIA + 1) + '–' + CFG.TOTAL_SESI +
+             ' belum ada materi dan soalnya — ibu yang sampai di situ melihat ' +
+             'layar "belum tersedia"');
+    }
 
     const suspek = [];
     Object.keys(CONTENT.setSoal).forEach((k) => {

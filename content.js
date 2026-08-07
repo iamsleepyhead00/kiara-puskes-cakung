@@ -255,21 +255,89 @@ window.KIARA_CONTENT = {
               'Aktivitas berat dan makanan yang tidak matang',
               'Tanda bahaya kehamilan trimester 1, 2, dan 3',
               'Kapan harus segera ke fasilitas kesehatan']
+    },
+
+    /* ── Sesi 5–10: terdaftar, belum bisa dijalankan ──────────
+       `materi` dan `setSoal` kosong karena puskesmas baru mengirim K.1–K.4.
+       Yang menahannya `SESI_TERSEDIA: 4` di config.js — lihat blok B2.
+       Judulnya dari nama slide deck puskesmas, PERLU DIKONFIRMASI. */
+    {
+      ke: 5,
+      judul: 'Persiapan Persalinan & IMD',
+      label: 'Persalinan & IMD',
+      setSoal: [], materi: [],
+      pokok: ['Persiapan persalinan', 'Tanda persalinan', 'Proses persalinan',
+              'Inisiasi Menyusu Dini (IMD)']
+    },
+    {
+      ke: 6,
+      judul: 'Nifas & Mitos Masa Nifas',
+      label: 'Nifas & mitos nifas',
+      setSoal: [], materi: [],
+      pokok: ['Tanda bahaya setelah melahirkan', 'Pelayanan nifas',
+              'Menjaga kesehatan ibu dan bayi pada masa nifas',
+              'Mitos pada masa nifas']
+    },
+    {
+      ke: 7,
+      judul: 'Menjaga Ibu Nifas & Bayi Sehat',
+      label: 'Ibu nifas & bayi sehat',
+      setSoal: [], materi: [],
+      pokok: ['Menjaga ibu bersalin, nifas, dan bayi sehat',
+              'Tanda bahaya pada ibu nifas',
+              'Depresi setelah melahirkan']
+    },
+    {
+      ke: 8,
+      judul: 'KB Pasca Persalinan',
+      label: 'KB pasca persalinan',
+      setSoal: [], materi: [],
+      pokok: ['KB pasca persalinan', 'Metode Amenorhae Laktasi (MAL)']
+    },
+    {
+      ke: 9,
+      judul: 'Bayi Baru Lahir & ASI Eksklusif',
+      label: 'Bayi baru lahir & ASI',
+      setSoal: [], materi: [],
+      pokok: ['Tanda bayi lahir sehat', 'Tanda bahaya bayi baru lahir',
+              'Perawatan bayi baru lahir', 'Perawatan Metode Kangguru (PMK)',
+              'ASI eksklusif, posisi pelekatan, cara memerah dan menyimpan ASI']
+    },
+    {
+      ke: 10,
+      judul: 'Imunisasi & Perawatan Bayi',
+      label: 'Imunisasi & perawatan bayi',
+      setSoal: [], materi: [],
+      pokok: ['Imunisasi', 'Menjaga bayi tetap sehat',
+              'Akta kelahiran', 'Peran suami', 'Mitos perawatan bayi']
     }
   ],
 
   /* ══════════════════════════════════════════════════════════
-     B2. SESI DITAHAN — kunjungan 5+ belum bisa disusun
+     B2. SESI 5–10 — terdaftar, BELUM bisa dijalankan
 
-     Puskesmas baru mengirim materi dan soal untuk kunjungan 1–4.
-     Peta sesi 5–10 versi lama (berbasis Buku Pegangan Fasilitator)
-     sudah tidak relevan dengan penomoran K.1–K.4 yang baru, jadi
-     tidak dibawa ke sini supaya tidak menyesatkan.
+     Klien minta (7 Agu) aplikasi mengakui programnya 10 pertemuan, bukan 4.
+     Jadi keenam sesi ini ikut terdaftar di `sesi` di atas supaya tampilan
+     menyebut "dari 10" dan LULUS baru terbit setelah kunjungan ke-10.
 
-     Yang tersedia untuk kunjungan berikutnya:
+     Tapi `materi` DAN `setSoal` keduanya kosong — puskesmas baru mengirim
+     untuk K.1–K.4. Yang menahannya adalah `SESI_TERSEDIA: 4` di config.js:
+     ibu yang sampai di sesi 5 melihat layar "belum tersedia", bukan
+     pre-test nol soal.
+
+     ⚠️ JUDULNYA PERLU DIKONFIRMASI. Diambil dari nama slide deck
+        "MATERI 1-10 KIARA.zip" kiriman puskesmas — jadi sumbernya sah, tapi
+        penomoran deck itu belum tentu sejajar dengan penomoran K.1–K.4 yang
+        sekarang dipakai. K.1 misalnya berisi Tanda Kehamilan + 1000 HPK,
+        sementara slide 1 berjudul "Kehamilan yang Sehat".
+
+     Yang sudah ada di tangan untuk sesi berikutnya:
        • soal "Imunisasi" (5 soal) — di `setSoalDitahan`
        • video VID_IMD, VID_ASI_EKSKLUSIF, VID_PELEKATAN — di media/
-     Belum ada instruksi kunjungan ke berapa. Tunggu puskesmas.
+     Belum ada instruksi masuk kunjungan ke berapa.
+
+     Untuk menghidupkan satu sesi: isi `materi` dan `setSoal`-nya (harus
+     berjumlah SOAL_PER_SESI = 10 soal), lalu naikkan SESI_TERSEDIA.
      ══════════════════════════════════════════════════════════ */
   sesiDitahan: [],
 

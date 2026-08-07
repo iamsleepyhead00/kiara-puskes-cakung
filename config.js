@@ -87,16 +87,29 @@ window.KIARA_CONFIG = {
   //    endpoint menolak skor yang bukan kelipatan POIN_PER_SOAL.
   KKM: 80,
 
-  // Jumlah sesi yang AKTIF dipakai.
+  // ── JUMLAH SESI ────────────────────────────────────────────
+  // Dua angka, dan bedanya penting.
   //
-  // Puskesmas konfirmasi (2 Agu): baru sesi 1–4 yang dipakai. Sesi 5–10
-  // ditahan karena materinya belum ada. Definisi sesi 5–10 disimpan di
-  // content.js pada blok `sesiDitahan` — untuk menghidupkannya:
-  //   1. pindahkan entri dari `sesiDitahan` ke `sesi`
-  //   2. naikkan TOTAL_SESI di sini
-  // Seluruh tampilan (tracker, progress, "sesi X dari Y", layar lulus)
-  // dan deteksi status LULUS ikut angka ini, tidak ada yang di-hardcode.
-  TOTAL_SESI: 4,
+  // TOTAL_SESI = panjang program sebenarnya. Kelas ibu hamil memang 10
+  // pertemuan, jadi seluruh tampilan menyebut "dari 10" dan status LULUS
+  // baru terbit setelah kunjungan ke-10. Ini yang diminta klien 7 Agu:
+  // jangan berpura-pura programnya cuma 4 pertemuan.
+  TOTAL_SESI: 10,
+
+  // SESI_TERSEDIA = berapa sesi yang benar-benar bisa dijalankan aplikasi.
+  // Puskesmas baru mengirim materi dan soal untuk kunjungan 1–4. Sesi 5–10
+  // sudah terdaftar di content.js tapi materi dan soalnya kosong — kalau
+  // dipaksa jalan, pre-test-nya nol soal dan skornya kacau.
+  //
+  // Ibu yang riwayatnya sudah sampai sesi 4 dan datang untuk sesi 5 akan
+  // melihat layar "belum tersedia", bukan pre-test yang rusak.
+  //
+  // Dropdown koreksi sesi juga ikut angka ini, bukan TOTAL_SESI — petugas
+  // tidak bisa memilih sesi yang belum bisa dijalankan.
+  //
+  // Naikkan angka ini begitu puskesmas mengirim materi + soal berikutnya,
+  // dan isi `materi` serta `setSoal` sesi itu di content.js.
+  SESI_TERSEDIA: 4,
 
   // Batas percobaan post-test. null = tanpa batas.
   MAX_PERCOBAAN_POST: null,

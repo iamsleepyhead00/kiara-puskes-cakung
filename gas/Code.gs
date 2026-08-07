@@ -96,7 +96,9 @@ var BATAS = {
   // 10 soal per kunjungan (2 topik × 5 soal), lulus 8 dari 10 → KKM 80.
   // Harus sama dengan KKM di config.js.
   KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 80,
-  SESI_MAKS: 10,    SESI_DEFAULT: 4,
+  // SESI_DEFAULT dipakai kalau klien tidak mengirim totalSesi. Harus sama
+  // dengan TOTAL_SESI di config.js — programnya 10 pertemuan, bukan 4.
+  SESI_MAKS: 10,    SESI_DEFAULT: 10,
   POIN_PER_SOAL: 10,                  // 10 soal → skor kelipatan 10
   SIMPAN_PER_JENDELA: 40,             // kapasitas nyata ~40 pasien/hari
   JENDELA_MENIT: 10
@@ -218,8 +220,12 @@ function lolosThrottle() {
   var props = PropertiesService.getScriptProperties();
   var sekarang = new Date().getTime();
   var jendelaMs = BATAS.JENDELA_MENIT * 60 * 1000;
-  var mulai = Number(props.getProperty('throttleMulai')) || 0;
-  var hitung = Number(props.getProperty('throttleHitung')) || 0;
+
+  // getProperties() sekali, bukan getProperty() dua kali — sama seperti
+  // Sheets, setiap panggilan PropertiesService itu perjalanan jaringan.
+  var semua = props.getProperties();
+  var mulai = Number(semua.throttleMulai) || 0;
+  var hitung = Number(semua.throttleHitung) || 0;
 
   if (!mulai || sekarang - mulai > jendelaMs) {
     props.setProperties({ throttleMulai: String(sekarang), throttleHitung: '1' });
@@ -244,7 +250,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 7, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 8, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
@@ -281,7 +287,19 @@ function kunciHeader(s) {
  * @returns {string} '' kalau cocok, atau penjelasan ketidakcocokan
  */
 function bedaHeader(sh) {
-  var ada = sh.getRange(1, 1, 1, JML_KOLOM).getValues()[0];
+  return bedaHeaderDari(sh.getRange(1, 1, 1, JML_KOLOM).getValues()[0]);
+}
+
+/**
+ * Versi yang menerima baris header yang SUDAH dibaca.
+ *
+ * handleSave() membaca header dan seluruh data dalam satu panggilan
+ * getValues(), lalu memeriksa headernya dari hasil itu. Tanpa pemisahan ini
+ * pemeriksaan header memakan satu panggilan Sheets sendiri — dan setiap
+ * panggilan Sheets dari Apps Script itu perjalanan jaringan, bukan operasi
+ * memori.
+ */
+function bedaHeaderDari(ada) {
   var salah = [];
   for (var i = 0; i < JML_KOLOM; i++) {
     if (kunciHeader(ada[i]) !== kunciHeader(HEADER_HARAPAN[i])) {
@@ -316,13 +334,16 @@ function ambilData(sh) {
    LOOKUP — dipakai screen S3 (Konfirmasi)
    ══════════════════════════════════════════════════════════ */
 
-function handleLookup(p) {
-  var nik = bersihNik(p.nik);
-  if (!nik) return { ok: false, error: 'nik kosong' };
-
-  var data = ambilData(sheet());
+/**
+ * Kumpulkan riwayat satu NIK dari data yang SUDAH dibaca, terurut menurut
+ * nomor kunjungan.
+ *
+ * Dipisah supaya handleSave() bisa memakainya tanpa membaca ulang sheet.
+ * Sebelumnya handleSave memanggil handleLookup() di akhir, dan itu berarti
+ * satu pembacaan penuh seluruh sheet hanya untuk menyusun jawaban.
+ */
+function riwayatDari(data, nik) {
   var riwayat = [];
-
   for (var i = 0; i < data.length; i++) {
     if (bersihNik(data[i][K.NIK - 1]) !== nik) continue;
     riwayat.push({
@@ -334,10 +355,19 @@ function handleLookup(p) {
       statusKkm: String(data[i][K.STATUS - 1] || '').trim()
     });
   }
+  riwayat.sort(function (a, b) { return a.kunjunganKe - b.kunjunganKe; });
+  return riwayat;
+}
+
+function handleLookup(p) {
+  var nik = bersihNik(p.nik);
+  if (!nik) return { ok: false, error: 'nik kosong' };
+
+  var data = ambilData(sheet());
+  var riwayat = riwayatDari(data, nik);
 
   if (!riwayat.length) return { ok: true, baru: true, kunjungan: 1, riwayat: [] };
 
-  riwayat.sort(function (a, b) { return a.kunjunganKe - b.kunjunganKe; });
   var akhir = riwayat[riwayat.length - 1];
   var barisAkhir = data[akhir.baris - 2];
 
@@ -393,8 +423,21 @@ function handleSave(p) {
   try {
     var sh = sheet();
 
+    /* SATU pembacaan untuk header DAN seluruh data.
+       Sebelumnya di sini ada tiga pembacaan penuh sheet:
+         1. bedaHeader(sh)        — baris header
+         2. ambilData(sh)         — seluruh data
+         3. nomorBerikut(sh)      — seluruh data LAGI
+       lalu satu lagi di akhir lewat handleLookup() — total empat perjalanan
+       ke Sheets untuk satu penyimpanan. Setiap panggilan Sheets dari Apps
+       Script itu perjalanan jaringan, jadi itu yang membuat "Menyimpan
+       hasil..." lama. Sekarang satu saja. */
+    var lastRow = sh.getLastRow();
+    var blok = sh.getRange(1, 1, Math.max(1, lastRow), JML_KOLOM).getValues();
+    var data = blok.slice(1);
+
     // Jangan pernah menulis kalau susunan kolom tidak sesuai.
-    var beda = bedaHeader(sh);
+    var beda = bedaHeaderDari(blok[0]);
     if (beda) return { ok: false, error: 'Susunan kolom sheet tidak sesuai — ' + beda };
 
     // Di dalam lock supaya dua request bersamaan tidak sama-sama
@@ -403,8 +446,6 @@ function handleSave(p) {
       return { ok: false, error: 'Terlalu banyak penyimpanan dalam ' +
         BATAS.JENDELA_MENIT + ' menit terakhir. Coba lagi sebentar.' };
     }
-
-    var data = ambilData(sh);
 
     // KKM dan jumlah sesi tidak boleh ditentukan sepenuhnya oleh klien:
     // kkm=0 akan membuat semua orang LULUS. Nilai di luar rentang wajar
@@ -428,14 +469,31 @@ function handleSave(p) {
 
     if (barisAda > 0 && !allowUpdate) return { ok: false, error: 'DUPLIKAT' };
 
+    // Riwayat disusun dari data yang sudah di memori, BUKAN dengan membaca
+    // ulang sheet. Hasil tulisan di bawah ditambalkan ke salinan ini supaya
+    // jawabannya tetap mencerminkan keadaan terbaru.
+    var riwayat = riwayatDari(data, nik);
+
     if (barisAda > 0) {
       // Post-test diulang → perbarui nilai akhir, jangan tambah baris.
-      sh.getRange(barisAda, K.POST).setValue(post);
-      sh.getRange(barisAda, K.STATUS).setValue(status);
+      // POST dan STATUS bersebelahan, jadi cukup satu setValues untuk
+      // keduanya — dua panggilan jadi satu.
+      sh.getRange(barisAda, K.POST, 1, 2).setValues([[post, status]]);
       sh.getRange(barisAda, K.JAM).setValue("'" + jamJakarta());
+
+      // Hanya POST dan STATUS yang benar-benar ditulis, jadi hanya itu yang
+      // ditambal. skorPre dibiarkan apa adanya dari sheet — nilai itu berasal
+      // dari penyimpanan pertama dan tidak boleh ditimpa nilai dari klien.
+      for (var j = 0; j < riwayat.length; j++) {
+        if (riwayat[j].kunjunganKe === kunjungan) {
+          riwayat[j].skorPost = post;
+          riwayat[j].statusKkm = status;
+          break;
+        }
+      }
     } else {
       sh.appendRow([
-        nomorBerikut(sh),
+        nomorBerikutDari(data),
         "'" + tanggalJakarta(),
         "'" + jamJakarta(),
         amanTeks(p.nama),
@@ -449,9 +507,20 @@ function handleSave(p) {
         post,
         status
       ]);
+
+      // Baris baru dimasukkan sebagai entri riwayat langsung, bukan lewat
+      // pembacaan ulang. Nilainya sudah pasti — inilah yang baru ditulis.
+      riwayat.push({
+        baris: lastRow + 1,
+        kunjunganKe: kunjungan,
+        tanggal: tanggalJakarta(),
+        skorPre: pre,
+        skorPost: post,
+        statusKkm: status
+      });
+      riwayat.sort(function (a, b) { return a.kunjunganKe - b.kunjunganKe; });
     }
 
-    var riwayat = handleLookup({ nik: nik, totalSesi: total }).riwayat || [];
     return {
       ok: true,
       statusKkm: status,
@@ -465,9 +534,11 @@ function handleSave(p) {
 }
 
 /** Nomor urut berikutnya di kolom "No". Dihitung dari nilai terbesar, bukan
-    jumlah baris, supaya tetap benar kalau ada baris yang pernah dihapus. */
-function nomorBerikut(sh) {
-  var data = ambilData(sh);
+    jumlah baris, supaya tetap benar kalau ada baris yang pernah dihapus.
+
+    Menerima data yang SUDAH dibaca — versi lamanya memanggil ambilData()
+    sendiri, jadi seluruh sheet terbaca dua kali untuk satu penyimpanan. */
+function nomorBerikutDari(data) {
   var maks = 0;
   for (var i = 0; i < data.length; i++) {
     var n = Number(data[i][K.NO - 1]);
