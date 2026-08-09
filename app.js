@@ -1753,6 +1753,39 @@
     p.forEach((x) => console.warn('  • ' + x));
   }
 
+  /* ------------------------------------------------------
+     NOTE GRUP WHATSAPP  ·  S8 + S12
+     ------------------------------------------------------
+     Note ini muncul di layar hasil, SESUDAH penyimpanan selesai.
+     Sengaja tidak dipasang di tengah alur: membuka WhatsApp
+     memindahkan ibu keluar dari browser, dan halaman di latar bisa
+     dimatikan sistem sebelum hasilnya tersimpan.
+
+     Dikendalikan CFG.WA_GRUP_LINK. Kosong = note disembunyikan,
+     tanpa perlu mengubah HTML. */
+  function isiNoteGrup() {
+    const tautan = String(CFG.WA_GRUP_LINK || '').trim();
+
+    // Hanya terima tautan undangan grup WhatsApp yang sah. Salah tulis di
+    // config tidak boleh berubah jadi tautan ke tempat lain, karena yang
+    // mengkliknya ibu hamil yang percaya ini dari puskesmas.
+    const sah = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]+$/.test(tautan);
+
+    if (tautan && !sah) {
+      console.warn('KIARA — WA_GRUP_LINK diabaikan, bukan tautan undangan ' +
+        'grup WhatsApp yang sah: ' + tautan);
+    }
+
+    [['ha-grup', 'ha-grup-link'], ['kk-grup', 'kk-grup-link']].forEach(([kotak, anchor]) => {
+      const box = $(kotak);
+      const a = $(anchor);
+      if (!box || !a) return;
+      if (!sah) { box.hidden = true; return; }
+      a.href = tautan;
+      box.hidden = false;
+    });
+  }
+
   function init() {
     icons();
     initSplash();
@@ -1763,6 +1796,7 @@
     initHasilPre();
     initMateri();
     initAksiLain();
+    isiNoteGrup();
     peringatanKonfigurasi();
   }
 

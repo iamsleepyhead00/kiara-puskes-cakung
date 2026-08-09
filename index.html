@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300;6..12,400;6..12,600;6..12,700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
@@ -390,6 +390,16 @@
 
       <div class="alert warn" id="ha-simpan-warn" hidden></div>
 
+      <!-- Note grup WhatsApp. Disembunyikan kalau WA_GRUP_LINK kosong
+           di config.js - lihat isiNoteGrup() di app.js. -->
+      <div class="infobox block" id="ha-grup" hidden>
+        <b>Masih ada yang mau ditanyakan?</b>
+        <span>Ibu bisa bertanya soal materi di grup Kelas Ibu Hamil Online.</span>
+        <a class="tlink" id="ha-grup-link" href="#" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="message-circle"></i><span>Gabung grup WhatsApp</span>
+        </a>
+      </div>
+
       <button class="btn wa" id="btn-wa-hasil"><i data-lucide="send"></i>Kirim Hasil ke WhatsApp</button>
       <button class="btn o mt-sm" id="btn-lihat-progress">Lihat Progress Saya</button>
       <span class="tlink" id="btn-selesai">
@@ -492,6 +502,16 @@
       <!-- Tombol kirim WhatsApp sengaja TIDAK ada di layar ini.
            Hasil di bawah KKM tidak dikirim ke bidan; yang dikirim hanya
            hasil yang sudah mencapai KKM (dari layar S8). -->
+      <!-- Note grup WhatsApp, sama seperti di S8. Ibu yang belum mencapai
+           KKM justru paling butuh tempat bertanya. -->
+      <div class="infobox block mt-sm" id="kk-grup" hidden>
+        <b>Masih ada yang mau ditanyakan?</b>
+        <span>Ibu bisa bertanya soal materi di grup Kelas Ibu Hamil Online.</span>
+        <a class="tlink" id="kk-grup-link" href="#" target="_blank" rel="noopener noreferrer">
+          <i data-lucide="message-circle"></i><span>Gabung grup WhatsApp</span>
+        </a>
+      </div>
+
       <div class="center tiny muted mt-md" id="kk-catatan">
         Hasil dikirim ke bidan setelah nilai Ibu mencapai KKM.
         Kehadiran hari ini tetap tercatat.
@@ -573,9 +593,9 @@
 <!-- config.js?v=10 — v=8 dan v=9 sempat menyajikan OFFLINE_MODE yang
      berbeda selama uji lokal, jadi angkanya dinaikkan supaya cache
      browser tidak ambigu. -->
-<script src="config.js?v=12"></script>
+<script src="config.js?v=13"></script>
 <script src="content.js?v=9"></script>
 <script src="visit-tracker.js?v=5"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

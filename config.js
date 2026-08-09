@@ -69,6 +69,27 @@ window.KIARA_CONFIG = {
   TARGET_PHONE: '6285889945829',
   ENABLE_WA_BUTTON: true,
 
+  // ── GRUP WHATSAPP KELAS IBU HAMIL ──────────────────────────
+  // Note di layar hasil (S8 dan S12) yang mengajak ibu bertanya lewat
+  // grup kalau masih ada yang belum jelas dari materi.
+  //
+  // Ditaruh SESUDAH hasil tersimpan, bukan sebelum submit. Membuka
+  // WhatsApp memindahkan ibu keluar dari browser, dan di Android
+  // dengan memori kecil halaman di latar bisa dimatikan sistem.
+  // Kalau itu terjadi sebelum penyimpanan selesai, hasilnya hilang.
+  //
+  // Kosongkan ('') untuk menyembunyikan note ini sepenuhnya —
+  // tidak perlu mengubah HTML atau JS.
+  //
+  // ⚠️ TAUTAN INI PUBLIK. Repo ini publik, jadi siapa pun yang
+  //    menemukannya bisa mencoba bergabung. Di dalam grup WhatsApp,
+  //    nomor HP antar anggota saling terlihat — itu data ibu hamil.
+  //    Sebelum dipakai, admin grup WAJIB menyalakan:
+  //      Setelan grup → Setujui anggota baru  (aktif)
+  //      Setelan grup → Kirim pesan → Hanya admin (kalau perlu)
+  //    Kalau salah satu belum aktif, kosongkan tautan ini dulu.
+  WA_GRUP_LINK: 'https://chat.whatsapp.com/I8SndAlr0cuKztz6REjkCu',
+
   // ── SCORING ────────────────────────────────────────────────
   // Setiap TOPIK berisi 5 soal, dan jumlah topik per kunjungan
   // berbeda-beda. Jadi jumlah soal per kunjungan TIDAK seragam:

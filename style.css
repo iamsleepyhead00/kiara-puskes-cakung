@@ -367,6 +367,10 @@ select.fi option{color:var(--ink);font-weight:var(--w-normal)}
   text-underline-offset:3px;transition:text-decoration-color .16s ease;
 }
 .tlink svg{width:14px;height:14px;stroke-width:1.9;opacity:.8}
+/* Kelas ini dipakai di <span> maupun <a>. Pada <a>, garis bawah bawaan
+   browser ikut menutupi ikon — matikan, biar garisnya tetap hanya di
+   bawah teks lewat .tlink span di atas. */
+a.tlink{text-decoration:none}
 .tlink:hover{color:var(--rose-dark);background:var(--rose-soft)}
 .tlink:hover span{text-decoration-color:var(--rose-mid)}
 .tlink:hover svg{opacity:1}
