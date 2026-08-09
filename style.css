@@ -149,7 +149,17 @@ svg{flex-shrink:0}
   display:grid;place-items:center;margin-bottom:26px;z-index:1;
   animation:naik .7s cubic-bezier(.22,.9,.3,1.1);
 }
-.sp-logo svg{width:42px;height:42px;stroke-width:1.5}
+/* Diperbesar 42px → 62px atas permintaan klien 9 Agustus.
+   Ikonnya terlihat jauh lebih kecil dari angka ini karena Material Symbols
+   menyisakan ruang kosong di dalam viewBox-nya: figur ibu hamil hanya
+   mengisi sekitar sepertiga lebar dan 83% tinggi kotak 960×960. Jadi pada
+   42px, figur yang benar-benar terlihat cuma ±35px tinggi dan ±14px lebar —
+   kelihatan mungil di dalam kotak 92px.
+
+   62px menyisakan 15px di setiap sisi kotak, masih lega dan tidak menyentuh
+   tepi. Kalau mau lebih besar lagi, naikkan .sp-logo (92px) juga, jangan
+   hanya svg-nya, supaya ikon tidak terasa mendesak bingkai. */
+.sp-logo svg{width:62px;height:62px;stroke-width:1.5}
 
 /* ── Halo berdenyut ────────────────────────────────────────
    Dua cincin menyebar keluar bergantian, memberi kesan gelombang USG.

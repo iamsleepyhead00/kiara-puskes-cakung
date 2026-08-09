@@ -32,21 +32,29 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 
 **Yang sudah jalan dan terverifikasi:**
 
-- GitHub Pages aktif, seluruh perubahan sampai 7 Agustus sudah tayang
-- Backend Apps Script ter-deploy dan terverifikasi live 7 Agustus pada
-  `versi: 8`. **Repo sekarang `versi: 9` — belum di-deploy**, dan kali ini
-  bedanya berdampak: validasi "skor kelipatan 10" dicabut. Tanpa deploy,
-  semua penyimpanan kunjungan 3 (15 soal) akan gagal
+- GitHub Pages aktif, seluruh perubahan sampai 9 Agustus sudah tayang
+- Backend Apps Script **ter-deploy pada `versi: 10` dan sinkron dengan repo**,
+  terverifikasi live 9 Agustus. Tidak ada lagi selisih repo vs deployment
 - Simpan dan lookup dari origin `github.io` terbukti jalan — CORS beres
   (`Access-Control-Allow-Origin: *` di dua hop), baris mendarat di sheet
-- Waktu terukur 7 Agu pada `versi: 8`: simpan rata-rata **2.520 ms**
-  (rentang 2.014–3.076), lookup rata-rata **1.664 ms**. Sekitar 1,5 detik dari
-  itu biaya tetap Apps Script — lookup yang cuma satu pembacaan pun 1,7 detik
+- Waktu terukur 9 Agu pada `versi: 10`: simpan rata-rata **2.516 ms**
+  (rentang 1.819–5.060), lookup sekitar **2.400 ms**. Sekitar 1,5 detik dari
+  itu biaya tetap Apps Script — lookup yang cuma satu pembacaan pun 1,7 detik.
+  Outlier 5 detik muncul saat skrip baru dibangunkan (cold start)
 - Pra-ambil riwayat membuat 1,7 detik lookup itu tidak dirasakan ibu: berjalan
   di belakang layar sejak NIK dilengkapi
 - Validasi terbukti: `kkm=0` tetap menghasilkan `BELUM` bukan `LULUS`;
   `=CONCATENATE(E2:E50)` tersimpan sebagai teks bukan formula; kelurahan di luar
   daftar ditolak; "Luar wilayah Cakung" diterima
+- **Skor 15 soal terverifikasi pada `versi: 10`** — seluruh 16 kemungkinan
+  (0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 100) diterima,
+  dan garis LULUS jatuh tepat di 12/15. Ditolak: 101, −5, 80.5, `abc`
+- **Skor kosong ditolak** sejak `versi: 10` (`"Post-Test tidak terkirim"`).
+  Sebelumnya kosong ditulis 0 diam-diam — bug di aplikasi bisa menghasilkan
+  baris bernilai 0 yang tampak sah. Skor 0 yang sungguhan tetap diterima
+- **Duplikat tidak bisa masuk** — 5 submit bersamaan untuk kunjungan yang sama
+  menghasilkan tepat 1 baris, 4 sisanya `DUPLIKAT`. `LockService` bekerja.
+  Post-test yang diulang memperbarui baris, bukan menambah
 - **Kunci jawaban resmi** dari paket 9 Agustus — bukan lagi turunan
 - Semua 9 topik aktif punya videonya. Tidak ada pasien yang diuji tanpa materi
 - `OFFLINE_MODE: false` — aplikasi tersambung ke sheet sungguhan
@@ -57,8 +65,13 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 mengganti seluruh sumber konten sebelumnya. Blocker video praktis selesai:
 1.122 MB → 186 MB, berkas terbesar 68 MB (di bawah batas 100 MB GitHub).
 
-**Yang belum bisa dipakai pasien:** kunci jawaban belum diverifikasi bidan.
-Lihat bagian Blocker.
+**Berubah 9 Agustus:** paket kunci jawaban resmi datang, topik Anemia masuk
+kunjungan 3 (jadi 15 soal), dan 3 video baru ditambahkan. Note grup WhatsApp
+dipasang di layar hasil. Backend naik ke `versi: 10` dan sudah di-deploy.
+
+**Sisa blocker sebelum dipakai pasien nyata:** endpoint Apps Script masih
+terbuka dan URL-nya ada di repo publik — lihat bagian 8. Selain itu tidak ada
+lagi yang menghalangi; kunci sudah resmi, materi lengkap, dan backend sinkron.
 
 ---
 
@@ -594,37 +607,30 @@ Kandidat lama `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` (99 MB) tidak dipakai —
 puskesmas mengirim videonya sendiri, dan isi soal Mitos juga sudah berganti
 dari mitos TTD ke mitos kehamilan.
 
-### 5.3 Deployment Apps Script tertinggal dari repo
+### 5.3 ~~Deployment Apps Script tertinggal dari repo~~ — SELESAI 9 Agustus
 
-GitHub Pages **sudah nyala** — `index.html` balas 200, dan video sudah di repo
-(commit `4c5a265`) jadi materinya langsung jalan. Tidak perlu YouTube.
+**Blocker ini sudah tidak ada.** Deployment dan repo dua-duanya `versi: 10`,
+diverifikasi lewat `?action=ping`.
 
-Masalahnya sekarang terbalik: **frontend lebih baru dari backend.** Opsi
-kelurahan "Luar wilayah Cakung" sudah tampil di dropdown, tapi deployment
-Apps Script masih memakai `KELURAHAN_SAH` yang lama. Sudah diuji langsung ke
-endpoint dari origin `github.io`:
+Riwayatnya panjang karena selisih ini muncul berulang: `versi: 5` → 7 → 8 → 9
+→ 10. Pola kegagalannya selalu sama — file di-Save di editor Apps Script tapi
+**Deploy → Manage deployments → New version** tidak dijalankan, sehingga URL
+yang dipakai aplikasi tetap menyajikan kode lama. Dua kali dalam sesi 9 Agustus
+uji menunjukkan perilaku yang tidak berubah sama sekali, dan itu yang
+mengungkap Save-tanpa-deploy.
 
-```
-save kelurahan=Luar wilayah Cakung  →  {"ok":false,"error":"Kelurahan tidak dikenal"}
-```
+Cara memastikan, bukan berasumsi: `?action=ping` harus membalas nomor `versi`
+yang sama dengan yang ada di `gas/Code.gs`. Kalau beda, deployment tertinggal.
 
-Ibu yang memilih opsi itu **gagal simpan**. Yang lain aman — simpan dan lookup
-terbukti jalan, barisnya mendarat di sheet.
-
-Paparannya kecil karena aplikasi belum dipakai pasien nyata (kunci jawaban
-masih menunggu verifikasi bidan), tapi harus dibereskan sebelum dipakai:
-paste `gas/Code.gs` → Deploy → Manage deployments → Edit → New version.
-Cek berhasil: `?action=ping` balas `versi: 7`.
-
-Deployment sekarang masih balas `versi: 5`. Repo sudah `versi: 8`.
-
-Sejak 7 Agustus deploy ini membawa dua hal, bukan cuma kelurahan:
+Yang akhirnya terbawa deploy versi 9 dan 10:
 
 1. `KELURAHAN_SAH` + "Luar wilayah Cakung"
 2. **Perampingan `handleSave`** — 4 pembacaan sheet penuh jadi 1. Ini yang
-   bikin "Menyimpan hasil..." lama, dan tidak ada efeknya sampai di-deploy.
-   Perbaikan sisi frontend (pra-ambil riwayat, pemanasan container) sudah
-   jalan begitu di-push, tidak menunggu deploy.
+   bikin "Menyimpan hasil..." lama. Perbaikan sisi frontend (pra-ambil
+   riwayat, pemanasan container) sudah jalan begitu di-push, tidak menunggu
+   deploy
+3. `BATAS.POIN_PER_SOAL` dicabut → skor 15 soal (7, 13, 27, 33, …) diterima
+4. Skor kosong ditolak, tidak lagi ditulis 0 diam-diam
 
 ### 5.4 Duplikat media 160 MB
 
@@ -646,9 +652,9 @@ sendiri karena `media/` isinya aset klien.
 | 5 | Wilayah **TTD atau MMS** | tidak memengaruhi materi maupun kunci lagi — paket 9 Agu satu set dan kuncinya sudah resmi. `config.js` masih `TTD`, sekarang tidak berdampak |
 | 6 | Kunjungan 5+ | puskesmas baru mengirim K.1–K.4. `sesiDitahan` sekarang kosong |
 | 7 | Template pesan WhatsApp | dikarang sendiri |
-| 8 | **Revisi "puskesmas tempat periksa"** | kalimat kliennya berhenti di titik dua. Dua tafsir: (a) tambah opsi ke dropdown yang ada — ringan; (b) **field baru** terpisah dari puskesmas tempat kelas — berarti kolom sheet jadi 14, nabrak aturan 13 kolom. Belum dikerjakan sampai jelas |
-| 9 | **Link grup WhatsApp kelas ibu hamil online** | klien mau tombol gabung grup di layar hasil akhir. Butuh link `chat.whatsapp.com/...`. Belum ada |
-| 10 | **Rujukan halaman Buku KIA per topik** | klien mau pesan alternatif untuk ibu tanpa kuota. Butuh 8 nomor halaman dari bidan — tidak boleh dikarang. Plus keputusan: apakah baca Buku KIA membuka post-test? Kalau ya, anti-skip jadi sia-sia; kalau tidak, manfaatnya kecil |
+| 8 | ~~Revisi "puskesmas tempat periksa"~~ | **SELESAI 9 Agu** — diselesaikan klien sendiri di luar aplikasi. Tidak ada perubahan kode. `PUSKESMAS_SAH` di `Code.gs` tetap 9 item dan identik dengan `config.js`. Kalau nanti ada opsi baru, wajib masuk DUA tempat lalu deploy |
+| 9 | ~~Link grup WhatsApp kelas ibu hamil online~~ | **SELESAI 9 Agu** — commit `fb1b72c`, note di S8 + S12, `WA_GRUP_LINK` di `config.js`. Sisa tindakan admin grup: nyalakan "Setujui anggota baru", lihat bagian 8 |
+| 10 | **Rujukan halaman Buku KIA per topik** | satu-satunya revisi klien yang belum dikerjakan. Butuh 8 nomor halaman dari bidan — tidak boleh dikarang. Plus keputusan: apakah baca Buku KIA membuka post-test? Kalau ya, anti-skip jadi sia-sia; kalau tidak, manfaatnya kecil |
 
 Konten kesehatan tidak pernah dikarang. Kunci jawaban diturunkan karena berkas
 sumber memang tidak memuatnya, dan semuanya ditandai untuk diverifikasi — bukan
@@ -660,10 +666,10 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **WAJIB.** Validasi "skor kelipatan 10" dicabut karena kunjungan 3 punya 15 soal. Tanpa deploy, **semua penyimpanan kunjungan 3 gagal** — skornya 7/13/27/33 dst dan ditolak deployment lama. Cek berhasil: `?action=ping` balas `versi: 9` |
-| 2 | Tanya bidan soal K.3 Mitos no. 1 | kunci resmi "Salah" untuk *"wajib periksa hamil rutin"*, bertentangan dengan no. 5 di set yang sama. Lihat 5.1 |
-| 3 | Jalankan `hapusUji()` di Apps Script | Ada baris uji NIK `9999999999999999` dari uji waktu simpan 7 Agu |
-| 4 | Jawab 3 revisi yang ditunda | lihat bagian 6 no. 8–10 |
+| 1 | ~~Paste ulang `Code.gs` + deploy versi baru~~ | **SELESAI 9 Agu** — deployment sekarang `versi: 10`, terverifikasi lewat `?action=ping`. Skor 15 soal dan penolakan skor kosong dua-duanya terbukti jalan di sistem hidup |
+| 2 | Tanya bidan soal K.3 Mitos no. 1 | **klien memilih mengabaikan 9 Agu.** Kunci resmi puskesmas dipakai apa adanya. Penanda `perluKonfirmasi` hanya muncul di `console.warn`, tidak terlihat ibu — jadi tidak ada dampak ke alur |
+| 3 | Jalankan `hapusUji()` di Apps Script | **belum.** Ada 8 baris uji NIK `9999999999999999` (kunjungan 1–6, 8, 9) dari uji 9 Agu. `hapusUji()` hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`, jadi data ibu asli aman |
+| 4 | Jawab 1 revisi yang tersisa | lihat bagian 6 no. 10 — rujukan halaman Buku KIA. No. 8 dan 9 sudah selesai |
 | 5 | Konfirmasi judul sesi 5–10 | diambil dari nama slide deck, belum tentu sejajar dengan penomoran K.1–K.4 |
 | 6 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
 | 7 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
@@ -699,6 +705,22 @@ menutup akses**. Sebelum pasien nyata, lakukan salah satu:
 - Apps Script → Deploy → Manage deployments → Edit → New version (URL berubah,
   lalu perbarui `SHEETS_ENDPOINT` di `config.js`)
 - atau jadikan repo private
+
+**Tautan grup WhatsApp publik.** Sejak commit `fb1b72c`, `WA_GRUP_LINK` di
+`config.js` memuat tautan undangan grup. Repo publik berarti tautan itu publik
+— siapa pun yang menemukannya bisa mencoba bergabung. Di dalam grup WhatsApp
+nomor HP antar anggota saling terlihat, dan itu data ibu hamil.
+
+Sebelum dipakai pasien nyata, admin grup **wajib** menyalakan Setelan grup →
+Setujui anggota baru. Kalau belum, kosongkan `WA_GRUP_LINK` — note-nya otomatis
+hilang tanpa perlu menyentuh HTML atau JS.
+
+`isiNoteGrup()` di `app.js` menyaring tautan dengan regex
+`^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]+$`. Yang ditolak antara lain
+`http` biasa, domain menyamar seperti `chat.whatsapp.com.evil.com`, skema
+`javascript:`, dan `wa.me` (chat pribadi, bukan grup). Alasannya: yang mengklik
+adalah ibu hamil yang percaya tautan itu dari puskesmas, jadi salah tulis di
+config tidak boleh berubah jadi tautan ke tempat lain.
 
 **NIK disimpan mentah** sesuai struktur yang diminta puskesmas. Spreadsheet
 jangan pernah dibagikan dengan opsi "anyone with the link" — share ke akun bidan
