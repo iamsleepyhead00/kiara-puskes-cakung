@@ -528,7 +528,10 @@
 
   function initIdentifikasi() {
     isiDropdown($('in-kelurahan'), CFG.KELURAHAN, 'Pilih kelurahan');
-    isiDropdown($('in-puskesmas'), CFG.PUSKESMAS, 'Pilih puskesmas / pustu');
+    // Teks placeholder tidak lagi menyebut puskesmas/pustu: sejak 9 Agu
+    // daftarnya memuat Klinik/Praktik Bidan juga, jadi label yang lebih
+    // umum lebih tepat.
+    isiDropdown($('in-puskesmas'), CFG.PUSKESMAS, 'Pilih tempat periksa');
 
     // Pertanyaan riwayat periksa hamil ditanyakan lewat popup setelah SUBMIT,
     // bukan sebagai radio di dalam form.
@@ -596,7 +599,7 @@
     if (!VT.isHPValid(hp)) return errIdentifikasi('No. HP harus dimulai angka 0 dan minimal 9 digit.');
     if (alamat.length < 5) return errIdentifikasi('Alamat belum diisi.');
     if (!kel) return errIdentifikasi('Kelurahan belum dipilih.');
-    if (!pusk) return errIdentifikasi('Puskesmas belum dipilih.');
+    if (!pusk) return errIdentifikasi('Tempat periksa belum dipilih.');
 
     state.nik = nik;
     state.nama = nama;

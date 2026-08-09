@@ -702,18 +702,22 @@ window.KIARA_CONTENT = {
     '*HASIL KELAS IBU HAMIL — KIARA*',
     'Puskesmas Kecamatan Cakung',
     '',
-    'Nama        : {nama}',
-    'NIK         : {nikMask}',
-    'Alamat      : {alamat}',
-    'Kelurahan   : {kelurahan}',
-    'Puskesmas   : {puskesmas}',
-    'Sesi        : Ke-{sesi} dari {total}',
-    'Tanggal     : {tanggal}',
+    // Label dilebarkan dari 12 jadi 14 karakter (9 Agu) karena "Tempat
+    // Periksa" — pengganti label "Puskesmas" — panjangnya tepat 14. Kalau
+    // salah satu label diubah lagi, samakan lebar SELURUH baris di blok ini,
+    // kalau tidak titik dua-nya tidak lagi lurus di WhatsApp.
+    'Nama          : {nama}',
+    'NIK           : {nikMask}',
+    'Alamat        : {alamat}',
+    'Kelurahan     : {kelurahan}',
+    'Tempat Periksa: {puskesmas}',
+    'Sesi          : Ke-{sesi} dari {total}',
+    'Tanggal       : {tanggal}',
     '',
-    'Pre-Test    : {skorPre}',
-    'Post-Test   : {skorPost}',
-    'Perubahan   : {delta}',
-    'Status KKM  : {statusKkm} (KKM {kkm})'
+    'Pre-Test      : {skorPre}',
+    'Post-Test     : {skorPost}',
+    'Perubahan     : {delta}',
+    'Status KKM    : {statusKkm} (KKM {kkm})'
   ].join('\n'),
 
   waTemplateRekap: [
@@ -724,7 +728,8 @@ window.KIARA_CONTENT = {
     'NIK             : {nikMask}',
     'Alamat          : {alamat}',
     'Kelurahan       : {kelurahan}',
-    'Puskesmas       : {puskesmas}',
+    // Blok ini lebarnya 16 karakter, jadi "Tempat Periksa" (14) + 2 spasi.
+    'Tempat Periksa  : {puskesmas}',
     '',
     'Total sesi      : {selesai} dari {total}',
     'Rata-rata post  : {rataPost}',

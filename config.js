@@ -63,8 +63,11 @@ window.KIARA_CONFIG = {
     // Ditambah 9 Agu atas permintaan puskesmas — ibu yang periksa di luar
     // jaringan puskesmas tetap boleh ikut kelas. Ditaruh paling bawah supaya
     // puskesmas dan pustu tetap jadi pilihan pertama yang terlihat.
-    'Klinik',
-    'Praktik Bidan'
+    //
+    // Satu opsi gabungan, bukan dua. Diminta klien 9 Agu setelah melihat
+    // dropdown-nya: bidan tidak perlu memisahkan klinik dari praktik bidan
+    // untuk keperluan rekap, dan menggabungkannya memperpendek daftar.
+    'Klinik/Praktik Bidan'
   ],
 
   // ── BACKEND ────────────────────────────────────────────────
