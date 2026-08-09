@@ -93,13 +93,17 @@ var HEADER_HARAPAN = [
 var BATAS = {
   NAMA_MIN: 3,      NAMA_MAKS: 80,
   ALAMAT_MIN: 5,    ALAMAT_MAKS: 200,
-  // 10 soal per kunjungan (2 topik × 5 soal), lulus 8 dari 10 → KKM 80.
-  // Harus sama dengan KKM di config.js.
+  // KKM 80 berarti 80% benar. Harus sama dengan KKM di config.js.
+  //   10 soal → 8 dari 10        15 soal → 12 dari 15
   KKM_MIN: 50,      KKM_MAKS: 100,   KKM_DEFAULT: 80,
   // SESI_DEFAULT dipakai kalau klien tidak mengirim totalSesi. Harus sama
   // dengan TOTAL_SESI di config.js — programnya 10 pertemuan, bukan 4.
   SESI_MAKS: 10,    SESI_DEFAULT: 10,
-  POIN_PER_SOAL: 10,                  // 10 soal → skor kelipatan 10
+  // POIN_PER_SOAL DICABUT 9 Agustus. Jumlah soal per kunjungan tidak lagi
+  // seragam (10, 10, 15, 10) sejak puskesmas menambah topik Anemia di K.3,
+  // jadi skor tidak selalu kelipatan angka tertentu — 15 soal menghasilkan
+  // 7, 13, 27, 33, dan seterusnya. Validasinya diganti "bilangan bulat
+  // 0–100" di validasiSimpan().
   SIMPAN_PER_JENDELA: 40,             // kapasitas nyata ~40 pasien/hari
   JENDELA_MENIT: 10
 };
@@ -194,16 +198,20 @@ function validasiSimpan(p) {
     return 'Kunjungan ke- harus 1–' + BATAS.SESI_MAKS;
   }
 
-  // Soal Benar/Salah 10 butir × 10 poin (2 topik × 5 soal per kunjungan),
-  // jadi skor selalu kelipatan 10: 0, 10, 20, … 100. Nilai seperti 75 atau
-  // 77 tidak mungkin berasal dari aplikasi.
+  /* Skor = benar / jumlah soal × 100, dibulatkan.
+     Jumlah soal per kunjungan TIDAK seragam sejak 9 Agustus: kunjungan 3
+     punya 15 soal (tiga topik), sisanya 10. Jadi nilai yang sah bukan
+     kelipatan satu angka tertentu — 15 soal menghasilkan 7, 13, 27, 33, dan
+     seterusnya, sementara 10 soal menghasilkan kelipatan 10.
+
+     Pemeriksaan "kelipatan POIN_PER_SOAL" karena itu dicabut dan diganti
+     batas bilangan bulat 0–100. Ini memang lebih longgar. Peredam lain tetap
+     jalan: clamp KKM (kkm=0 tidak bisa membuat semua LULUS), throttle,
+     anti-injeksi formula, dan validasi kelurahan/puskesmas/nama/NIK. */
   var skor = [['Pre-Test', p.skorPre], ['Post-Test', p.skorPost]];
   for (var i = 0; i < skor.length; i++) {
     var v = Number(skor[i][1] == null || skor[i][1] === '' ? 0 : skor[i][1]);
-    if (!bulatDi(v, 0, 100)) return skor[i][0] + ' harus 0–100';
-    if (v % BATAS.POIN_PER_SOAL !== 0) {
-      return skor[i][0] + ' harus kelipatan ' + BATAS.POIN_PER_SOAL;
-    }
+    if (!bulatDi(v, 0, 100)) return skor[i][0] + ' harus bilangan bulat 0–100';
   }
 
   return '';
@@ -250,7 +258,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 8, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 9, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
@@ -574,7 +582,7 @@ function ujiTulis() {
     puskesmas: 'Puskesmas Cakung',
     kunjunganKe: 1,
     skorPre: 40,
-    skorPost: 80,   // kelipatan 20, dan >= KKM 80 supaya statusnya LULUS
+    skorPost: 80,   // >= KKM 80 supaya statusnya LULUS
     kkm: 80,
     totalSesi: 4,
     allowUpdate: '1'

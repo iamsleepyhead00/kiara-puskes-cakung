@@ -3,8 +3,8 @@
 
 # Video: default diblokir, hanya paket aktif K1–K4 yang diizinkan.
 #
-# Sesi yang dipakai baru 1–4, jadi cuma 6 berkas ini yang perlu ada di
-# hosting. Totalnya 186 MB, berkas terbesar 68 MB — semuanya di bawah batas
+# Sesi yang dipakai baru 1–4, jadi cuma 9 berkas ini yang perlu ada di
+# hosting. Totalnya 233 MB, berkas terbesar 68 MB — semuanya di bawah batas
 # 100 MB/berkas GitHub.
 #
 # Sisa isi media/ (paket TTD/MMS lama, Video-Maternal-*) sengaja TIDAK ikut:
@@ -17,12 +17,21 @@ media/**/*.mov
 media/*.mkv
 media/**/*.mkv
 
+# Paket 5 Agustus
 !media/K1-Tanda-Kehamilan.mp4
 !media/K1-Gizi-1000-HPK.mp4
 !media/K2-Gizi-Ibu-Hamil.mp4
 !media/K2-KEK.mp4
 !media/K3-Perawatan-Sehari-hari.mp4
 !media/K4-Hal-yang-Dihindari.mp4
+
+# Paket 9 Agustus — menutup dua topik yang sebelumnya tanpa video
+!media/K3-Mitos-dan-Fakta.mp4
+!media/K4-Tanda-Bahaya.mp4
+
+# Materi anemia diambil dari EduCatin (dashboard/questionnaire/video-anemia.mp4)
+# atas instruksi klien 9 Agustus — puskesmas mengirim soalnya tanpa videonya.
+!media/K3-Anemia.mp4
 
 # Buku rujukan internal 13,6 MB — bukan materi yang ditampilkan ke pasien
 media/**/Buku*Fasilitator*.pdf

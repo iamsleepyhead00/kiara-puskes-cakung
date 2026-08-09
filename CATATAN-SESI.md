@@ -32,21 +32,25 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 
 **Yang sudah jalan dan terverifikasi:**
 
-- Backend Apps Script ter-deploy dan aktif. Balasan ping: `versi: 5, kolom: 13`
-- **`POIN_PER_SOAL: 10` terverifikasi live (6 Agu).** Cara ujinya: kirim
-  `skorPost=75` — bukan kelipatan 10 maupun 20, jadi pasti ditolak, dan pesan
-  errornya yang menunjukkan konstanta mana yang aktif. Balasan:
-  `"Post-Test harus kelipatan 10"` (kode lama akan bilang "kelipatan 20").
-  Probe ini tidak menulis apa pun ke sheet karena validasi jalan sebelum lock
-- Kontrol tambahan: `skorPost=70` lolos validasi lalu dicegat `DUPLIKAT` —
-  skor kelipatan 10 yang dulu ditolak sekarang diterima
-- Repo sudah `versi: 6`, deployment masih `versi: 5`. Bedanya cuma komentar
-  dan nomor versi, tidak ada beda perilaku. Paste ulang saat sempat
-- Simpan dan lookup ke sheet berhasil (13 kolom, satu baris per kunjungan)
-- Clamp KKM terbukti: kirim `kkm=0` tetap menghasilkan `BELUM`, bukan `LULUS`
-- Anti-injeksi formula terbukti: `=CONCATENATE(E2:E50)` tersimpan sebagai teks, bukan formula
+- GitHub Pages aktif, seluruh perubahan sampai 7 Agustus sudah tayang
+- Backend Apps Script ter-deploy dan terverifikasi live 7 Agustus pada
+  `versi: 8`. **Repo sekarang `versi: 9` — belum di-deploy**, dan kali ini
+  bedanya berdampak: validasi "skor kelipatan 10" dicabut. Tanpa deploy,
+  semua penyimpanan kunjungan 3 (15 soal) akan gagal
+- Simpan dan lookup dari origin `github.io` terbukti jalan — CORS beres
+  (`Access-Control-Allow-Origin: *` di dua hop), baris mendarat di sheet
+- Waktu terukur 7 Agu pada `versi: 8`: simpan rata-rata **2.520 ms**
+  (rentang 2.014–3.076), lookup rata-rata **1.664 ms**. Sekitar 1,5 detik dari
+  itu biaya tetap Apps Script — lookup yang cuma satu pembacaan pun 1,7 detik
+- Pra-ambil riwayat membuat 1,7 detik lookup itu tidak dirasakan ibu: berjalan
+  di belakang layar sejak NIK dilengkapi
+- Validasi terbukti: `kkm=0` tetap menghasilkan `BELUM` bukan `LULUS`;
+  `=CONCATENATE(E2:E50)` tersimpan sebagai teks bukan formula; kelurahan di luar
+  daftar ditolak; "Luar wilayah Cakung" diterima
+- **Kunci jawaban resmi** dari paket 9 Agustus — bukan lagi turunan
+- Semua 9 topik aktif punya videonya. Tidak ada pasien yang diuji tanpa materi
 - `OFFLINE_MODE: false` — aplikasi tersambung ke sheet sungguhan
-- Favicon ikon bayi di tab browser
+- Favicon ikon ibu hamil (Material Symbols Rounded) di tab browser
 
 **Berubah 5 Agustus:** puskesmas mengirim folder `DATA BASE VIDEO` — 6 video
 (186 MB) + 9 berkas soal, diberi prefiks K.1–K.4 untuk kunjungan 1–4. Ini
@@ -67,10 +71,12 @@ Jangan diubah tanpa instruksi baru.
 | Panjang program | **10 pertemuan** (`TOTAL_SESI`). LULUS baru terbit setelah kunjungan ke-10 |
 | Sesi yang bisa dijalankan | **1–4** (`SESI_TERSEDIA`) = kunjungan K.1–K.4. Sesi 5–10 terdaftar tapi materi & soalnya kosong → layar "belum tersedia" |
 | Dropdown koreksi sesi | ikut `SESI_TERSEDIA` (1–4), bukan `TOTAL_SESI` |
-| Sumber konten | folder **DATA BASE VIDEO** (5 Agu). Menggantikan bank soal buku fasilitator + paket video TTD/MMS |
-| Topik per kunjungan | **2 topik**, masing-masing 1 video + 1 set 5 soal |
-| Soal per kunjungan | **10 soal** Benar/Salah (2 topik × 5), digabung jadi satu pre-test dan satu post-test |
-| KKM | **80** = lulus 8 dari 10 benar |
+| Sumber konten | `drive-download-20260809T015409Z-1-001` (9 Agu), **kunci jawaban resmi** ditandai huruf tebal. Menggantikan paket 5 Agu |
+| Topik per kunjungan | 2 topik, **kecuali kunjungan 3 yang punya 3** (Perawatan, Mitos, Anemia) |
+| Soal per kunjungan | tiap topik 5 soal → **10, 10, 15, 10**. Digabung jadi satu pre-test dan satu post-test |
+| KKM | **80 = 80% benar**. Kunjungan 1/2/4: 8 dari 10. Kunjungan 3: **12 dari 15** |
+| Validasi skor backend | **bilangan bulat 0–100**, bukan lagi "kelipatan 10" — 15 soal menghasilkan 7, 13, 27, dst |
+| Video anemia | dari **EduCatin**, bukan puskesmas. Mereka mengirim soalnya tanpa video |
 | Materi PDF | **tidak dipakai** (slide + komik). Definisi disimpan di `materiDitahan`, file PDF sudah dihapus dari disk — bisa dibuat ulang dari zip di Downloads |
 | Sertifikat kelulusan | **DI-HOLD**. Jangan dibangun. Layar S13 dan `ENABLE_SERTIFIKAT` sudah dicabut |
 | Struktur sheet | **13 kolom datar**, ditetapkan puskesmas. Jangan diubah |
@@ -85,6 +91,116 @@ Jangan diubah tanpa instruksi baru.
 ---
 
 ## 4. Yang dikerjakan di sesi ini
+
+### Paket konten 9 Agustus — kunci jawaban resmi akhirnya datang
+
+Puskesmas mengirim `drive-download-20260809T015409Z-1-001.zip` (220 MB). Isinya
+7 video + 9 berkas soal, dan yang menentukan: **kunci jawaban ditandai huruf
+tebal** di berkas .docx. Dibaca lewat `python-docx` dengan memeriksa
+`run.bold`, bukan sekadar teksnya.
+
+**Blocker utama proyek ini selesai.** Kunci sudah resmi, bukan turunan.
+
+**Verifikasi terbukti perlu — dua kunci turunan ternyata keliru:**
+
+| Soal | Kunci turunan | Kunci resmi |
+|---|---|---|
+| K.1 Tanda Kehamilan no. 4 — *"trimester kedua 1 kali"* | Benar | **Salah** |
+| K.2 KEK no. 5 — *"mual dan tidak nafsu makan menyebabkan KEK"* | Benar | **Salah** |
+
+38 dari 40 cocok. Yang pertama memang sudah ditandai perlu konfirmasi karena
+bergantung pedoman — dinalar dari standar ANC 6× (TM1 2×, TM2 1×, TM3 3×);
+puskesmas memakai pembagian berbeda. Yang kedua sebelumnya dinilai "tidak
+ambigu", dan **penilaian itu yang salah**: KEK adalah kekurangan energi
+*kronis*, sementara mual hamil bersifat akut.
+
+Kalau tidak diverifikasi, ibu yang menjawab benar akan dinyatakan salah pada
+dua soal itu — cukup untuk menggeser status LULUS.
+
+**Perubahan konten:**
+
+| Hal | Detail |
+|---|---|
+| K.1 no. 2 diganti | *"terbagi menjadi 3 trimester"* → *"idealnya sebanyak 6 kali selama kehamilan"* (Benar) |
+| K.3 Mitos dan Fakta | **diganti seluruhnya.** Isi lamanya soal anemia dan mitos TTD — pindah dan diperluas ke topik Anemia. Sekarang berisi mitos kehamilan: makan 2 porsi, olahraga, makan ikan |
+| K.3 Anemia | **topik baru**, 5 soal |
+| Imunisasi | tidak ada di paket ini. Tetap ditahan, kuncinya masih turunan |
+
+**Dua lubang materi tertutup.** Topik yang sebelumnya diuji tanpa video kini
+punya videonya: `K3-Mitos-dan-Fakta.mp4` (20 MB) dan `K4-Tanda-Bahaya.mp4`
+(14 MB). Video anemia diambil dari **EduCatin**
+(`dashboard/questionnaire/video-anemia.mp4`, 12,5 MB) atas instruksi klien —
+puskesmas mengirim soalnya tanpa video.
+
+Media aktif jadi **9 berkas, 233 MB** (dari 6 berkas, 186 MB).
+
+**Jumlah soal per kunjungan jadi tidak seragam.** Ini konsekuensi yang perlu
+diingat:
+
+| Kunjungan | Topik | Soal | KKM 80 berarti |
+|---|---|---|---|
+| 1 | Tanda Kehamilan, 1000 HPK | 10 | 8 dari 10 |
+| 2 | Gizi, KEK | 10 | 8 dari 10 |
+| **3** | Perawatan, Mitos, **Anemia** | **15** | **12 dari 15** |
+| 4 | Dihindari, Tanda Bahaya | 10 | 8 dari 10 |
+
+Klien memilih mempertahankan semua soal (opsi A dari tiga pilihan) daripada
+membuangnya atau memindahkan Anemia ke kunjungan lain — puskesmas sendiri yang
+menulis prefiks `K.3`.
+
+Konsekuensinya **validasi "skor harus kelipatan 10" di backend harus dicabut**.
+Dengan 15 soal, skornya 0, 7, 13, 20, 27, 33 dan seterusnya — bukan kelipatan
+angka tertentu. Diganti batas bilangan bulat 0–100.
+
+Ini memang lebih longgar. Peredam lain tetap jalan: clamp KKM (`kkm=0` tidak
+bisa membuat semua LULUS), throttle 40 simpan/10 menit, anti-injeksi formula,
+dan validasi kelurahan/puskesmas/nama/NIK.
+
+`SOAL_PER_SESI` diganti `SOAL_PER_TOPIK: 5` — jumlah soal per sesi sekarang
+dihitung dari `setSoal`, bukan dipatok. Diagnostik di console ikut berubah:
+memeriksa jumlah soal = jumlah topik × 5, jadi topik yang berkasnya terpotong
+tetap ketahuan.
+
+**Satu kunci resmi terlihat keliru dan TIDAK dikoreksi sendiri.**
+
+K.3 Mitos dan Fakta no. 1 — *"Apakah selama kehamilan wajib melakukan periksa
+hamil rutin?"* → kunci resmi **Salah**. Itu bertentangan dengan no. 5 di set
+yang sama — *"Tidak perlu periksa hamil jika tidak ada keluhan"* → juga
+**Salah**. Dua-duanya tidak bisa benar sekaligus.
+
+Dugaan: seluruh set berisi mitos yang dijawab Salah, dan no. 1 terbawa padahal
+kalimatnya bukan mitos. Ditulis apa adanya dan ditandai `perluKonfirmasi`.
+
+**Catatan teknis: tiga berkas berekstensi `.docx` ternyata mp4.**
+`K.1 TANDA KEHAMILAN.docx`, `K.3 VIDEO PERAWATAN....docx`,
+`K.4 VIDEO HAL-HAL....docx` — diperiksa dari magic bytes, semuanya `ftyp`.
+Kebetulan ketiganya duplikat byte-per-byte dari yang sudah ada di `media/`
+(diverifikasi MD5), jadi tidak berdampak. Tapi kalau puskesmas mengirim lagi
+dengan pola sama, isinya bisa video baru yang terlewat — **periksa jenis berkas
+dari magic bytes, jangan percaya ekstensinya.**
+
+Yang berubah:
+
+| File | Perubahan |
+|---|---|
+| `content.js` | seluruh kunci diganti versi resmi, `kunciTurunan` dicabut dari set aktif |
+| `content.js` | `K3_MITOS_FAKTA` diganti total, `K3_ANEMIA` baru, materi `K3_MITOS_FAKTA`/`K3_ANEMIA`/`K4_TANDA_BAHAYA` baru |
+| `content.js` | sesi 3 jadi tiga topik, sesi 4 dapat video keduanya |
+| `config.js` | `SOAL_PER_SESI: 10` → `SOAL_PER_TOPIK: 5` |
+| `gas/Code.gs` | `POIN_PER_SOAL` dicabut, validasi skor jadi bilangan bulat 0–100, `versi: 9` |
+| `app.js` | diagnostik jumlah soal ikut jumlah topik, peringatan `tanpaVideo` dicabut |
+| `.gitignore` | tiga video baru diizinkan |
+| `KUNCI-JAWABAN.md` | menggantikan `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` yang dihapus |
+| `index.html` | `config.js?v=12`, `content.js?v=9`, `app.js?v=20` |
+
+Verifikasi: **83 uji lolos** — jumlah soal 10/10/15/10, dua koreksi kunci,
+set Anemia, Mitos diganti, semua topik punya video, 9 berkas ada di disk,
+ambang lulus tetap 80% di semua sesi, dan anti-skip/layar penuh/pra-ambil/
+pemulihan progres tidak tersentuh.
+
+Satu bug yang gw bikin dan ketangkap uji: komentar di `content.js` memuat
+teks `**Benar**/Salah`, dan rangkaian `*/` di situ **menutup komentar blok
+lebih awal** sehingga sisanya jadi kode. Kalimatnya diubah.
 
 ### Revisi ronde 2 — 7 Agustus
 
@@ -432,43 +548,51 @@ plus `manifest.json` agar jadi PWA.
 
 ## 5. Blocker — aplikasi belum bisa dipakai pasien
 
-### 5.1 Kunci jawaban belum diverifikasi bidan — blocker utama sekarang
+### 5.1 ~~Kunci jawaban belum diverifikasi~~ — SELESAI 9 Agustus
 
-Sembilan berkas .docx dari puskesmas hanya memuat pertanyaan dan pilihan
-"Benar/Salah". **Tidak ada tanda mana jawaban yang benar.**
+**Blocker ini sudah tidak ada.** Paket 9 Agustus memuat kunci jawaban resmi
+yang ditandai huruf tebal. Seluruh 45 kunci set aktif sekarang resmi, bukan
+turunan. Rinciannya di `KUNCI-JAWABAN.md`.
 
-Aplikasi butuh kunci untuk menghitung skor, jadi 45 kunci diturunkan dari
-pedoman Buku KIA dan standar ANC, semuanya ditandai `kunciTurunan: true` di
-`content.js`. Sebagian besar tidak ambigu ("Boleh minum alkohol selama hamil"
-jelas Salah), tapi kunci turunan tetap bukan kunci resmi — kalau ada yang
-salah, skor dan status LULUS ikut salah.
+Yang tersisa dari topik ini, jauh lebih kecil:
 
-Daftar cetaknya sudah disiapkan di `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` —
-tinggal dikirim ke bidan untuk dicoret-koreksi.
+1. **K.3 Mitos dan Fakta no. 1** — kunci resmi "Salah" untuk *"wajib periksa
+   hamil rutin"*, bertentangan dengan no. 5 di set yang sama. Ditulis apa
+   adanya, ditandai `perluKonfirmasi`. Perlu ditanyakan ke bidan
+2. **Imunisasi** — kuncinya masih turunan, dan topiknya masih ditahan karena
+   belum jelas masuk kunjungan ke berapa
 
-Tiga kunci yang jawabannya bergantung pedoman, bukan fakta medis:
+Catatan riwayat di bawah disimpan sebagai alasan kenapa kunci jawaban konten
+kesehatan tidak boleh diturunkan sendiri.
 
-| Soal | Kunci turunan | Kenapa perlu ditanya |
+<details>
+<summary>Riwayat: dua kunci turunan yang terbukti keliru</summary>
+
+Sebelum 9 Agustus, kunci diturunkan dari pedoman Buku KIA karena berkas sumber
+tidak memuatnya. 38 dari 40 cocok dengan kunci resmi. Dua yang salah:
+
+| Soal | Kunci turunan | Kunci resmi |
 |---|---|---|
-| K.1 Tanda Kehamilan no. 4 — "trimester kedua 1 kali" | Benar | Benar di standar ANC 6× (TM1 2×, TM2 1×, TM3 3×). Beda kalau puskesmas masih pakai standar 4× |
-| K.1 Tanda Kehamilan no. 5 — "semua ibu hamil dapat TTD" | Benar | Di wilayah MMS mereka dapat MMS, bukan TTD |
-| K.4 Hal Dihindari no. 1 — "kopi tidak lebih dari 1 cangkir" | Benar | Pedoman membatasi kafein tapi angka "1 cangkir" tidak baku |
+| K.1 Tanda Kehamilan no. 4 — *"trimester kedua 1 kali"* | Benar | **Salah** |
+| K.2 KEK no. 5 — *"mual dan tidak nafsu makan menyebabkan KEK"* | Benar | **Salah** |
 
-### 5.2 Dua topik punya soal tapi tidak ada videonya
+Yang pertama sudah ditandai perlu konfirmasi karena bergantung pedoman. Yang
+kedua sebelumnya dinilai "tidak ambigu" — penilaian itu yang salah.
 
-| Kunjungan | Topik | Soal | Video |
-|---|---|---|---|
-| 3 | Mitos dan Fakta | 5 | **tidak ada** |
-| 4 | Tanda Bahaya Hamil | 5 | **tidak ada** |
+</details>
 
-Pasien akan diuji tanpa menonton materinya. Untuk kunjungan 3 ada kandidat dari
-paket lama: `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` (99 MB) — isinya persis cocok,
-soal K.3 Mitos dan Fakta memang soal anemia dan mitos TTD. **Tidak diaktifkan**
-karena puskesmas sengaja tidak memasukkannya ke folder baru. Kalau disetujui,
-pindahkan entrinya dari `materiDitahan` ke `materi` lalu daftarkan di
-`sesi[2].materi` — satu baris.
+### 5.2 ~~Dua topik tanpa video~~ — SELESAI 9 Agustus
 
-Untuk kunjungan 4 tidak ada kandidat sama sekali.
+Paket 9 Agustus mengirim `K3-Mitos-dan-Fakta.mp4` (20 MB) dan
+`K4-Tanda-Bahaya.mp4` (14 MB). Video anemia untuk topik baru K.3 Anemia
+diambil dari EduCatin atas instruksi klien.
+
+**Semua 9 topik aktif sekarang punya videonya.** Tidak ada lagi pasien yang
+diuji tanpa materi. Penanda `tanpaVideo` di `content.js` sudah dicabut.
+
+Kandidat lama `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` (99 MB) tidak dipakai —
+puskesmas mengirim videonya sendiri, dan isi soal Mitos juga sudah berganti
+dari mitos TTD ke mitos kehamilan.
 
 ### 5.3 Deployment Apps Script tertinggal dari repo
 
@@ -515,11 +639,11 @@ sendiri karena `media/` isinya aset klien.
 
 | # | Hal | Kondisi sekarang |
 |---|---|---|
-| 1 | **Verifikasi 45 kunci jawaban** | diturunkan sendiri dari pedoman, ditandai `kunciTurunan`. Daftar cetak siap di `KUNCI-JAWABAN-PERLU-VERIFIKASI.md`. Lihat 5.1 |
-| 2 | Video untuk topik "Mitos dan Fakta" (K.3) | tidak ada. Kandidat `VID_MITOS_TTD` 99 MB, belum diaktifkan. Lihat 5.2 |
-| 3 | Video untuk topik "Tanda Bahaya Hamil" (K.4) | tidak ada, tanpa kandidat |
-| 4 | Soal "Imunisasi" masuk kunjungan ke berapa | berkasnya tanpa prefiks K. Ditahan di `setSoalDitahan` |
-| 5 | Wilayah **TTD atau MMS** | tidak lagi memengaruhi materi (paket baru satu set), tapi masih memengaruhi kunci soal K.1 no. 5. `config.js` masih `TTD` |
+| 1 | **K.3 Mitos dan Fakta no. 1** | kunci resmi "Salah" untuk *"wajib periksa hamil rutin"*, bertentangan dengan no. 5 di set yang sama. Ditulis apa adanya, ditandai `perluKonfirmasi`. Lihat 5.1 |
+| 2 | ~~Video Mitos dan Fakta~~ | **SELESAI** — dikirim di paket 9 Agu |
+| 3 | ~~Video Tanda Bahaya~~ | **SELESAI** — dikirim di paket 9 Agu |
+| 4 | Soal "Imunisasi" masuk kunjungan ke berapa | berkasnya tanpa prefiks K, dan paket 9 Agu tidak menyertakannya. Kuncinya masih turunan. Ditahan di `setSoalDitahan` |
+| 5 | Wilayah **TTD atau MMS** | tidak memengaruhi materi maupun kunci lagi — paket 9 Agu satu set dan kuncinya sudah resmi. `config.js` masih `TTD`, sekarang tidak berdampak |
 | 6 | Kunjungan 5+ | puskesmas baru mengirim K.1–K.4. `sesiDitahan` sekarang kosong |
 | 7 | Template pesan WhatsApp | dikarang sendiri |
 | 8 | **Revisi "puskesmas tempat periksa"** | kalimat kliennya berhenti di titik dua. Dua tafsir: (a) tambah opsi ke dropdown yang ada — ringan; (b) **field baru** terpisah dari puskesmas tempat kelas — berarti kolom sheet jadi 14, nabrak aturan 13 kolom. Belum dikerjakan sampai jelas |
@@ -536,11 +660,11 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **MENDESAK, dan sekarang membawa dua hal.** (a) Opsi "Luar wilayah Cakung" masih ditolak deployment lama — diuji langsung: `{"ok":false,"error":"Kelurahan tidak dikenal"}`. (b) Perampingan `handleSave` (4 pembacaan sheet → 1) tidak ada efeknya sampai di-deploy. Cek berhasil: `?action=ping` balas `versi: 8`. Lihat 5.3 |
-| 2 | **Kirim `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` ke bidan** | blocker utama, lihat 5.1 |
-| 3 | Jalankan `hapusUji()` di Apps Script | Ada baris uji NIK `9999999999999999` dari uji tulis-baca 7 Agu |
+| 1 | **Paste ulang `Code.gs` + deploy versi baru** | **WAJIB.** Validasi "skor kelipatan 10" dicabut karena kunjungan 3 punya 15 soal. Tanpa deploy, **semua penyimpanan kunjungan 3 gagal** — skornya 7/13/27/33 dst dan ditolak deployment lama. Cek berhasil: `?action=ping` balas `versi: 9` |
+| 2 | Tanya bidan soal K.3 Mitos no. 1 | kunci resmi "Salah" untuk *"wajib periksa hamil rutin"*, bertentangan dengan no. 5 di set yang sama. Lihat 5.1 |
+| 3 | Jalankan `hapusUji()` di Apps Script | Ada baris uji NIK `9999999999999999` dari uji waktu simpan 7 Agu |
 | 4 | Jawab 3 revisi yang ditunda | lihat bagian 6 no. 8–10 |
-| 5 | Tanya puskesmas soal 2 topik tanpa video | lihat 5.2 |
+| 5 | Konfirmasi judul sesi 5–10 | diambil dari nama slide deck, belum tentu sejajar dengan penomoran K.1–K.4 |
 | 6 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
 | 7 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
 | 8 | Hapus 3 video duplikat (160 MB) | opsional, lihat 5.4 |
@@ -620,8 +744,8 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 - Google kadang membalas halaman HTML "Halaman Tidak Ditemukan" alih-alih JSON.
   Itu gangguan sesaat, ulangi requestnya
 - Naikkan `?v=` di `index.html` setiap JS/CSS berubah. Sekarang:
-  `style.css?v=11`, `config.js?v=11`, `content.js?v=8`, `visit-tracker.js?v=5`,
-  `app.js?v=19`
+  `style.css?v=11`, `config.js?v=12`, `content.js?v=9`, `visit-tracker.js?v=5`,
+  `app.js?v=20`
 - **Jangan mengarang konten kesehatan.** Kunci jawaban yang terlihat keliru
   ditulis apa adanya lalu ditandai `perluKonfirmasi`
 - Jangan pakai identitas git kantor untuk repo pribadi user
@@ -646,6 +770,6 @@ itu plafon mekanisme pembayaran, bukan plafon nilai proyek.
 | `icons/favicon.svg` | ikon bayi untuk tab |
 | `STRUKTUR-GOOGLE-SHEET.md` | 13 kolom, aturan validasi, 9 rumus rekap untuk bidan |
 | `BATAS-MEDIA-GITHUB.md` | batas GitHub + hitungan bandwidth paket 186 MB, alasan video ikut repo, opsi cadangan YouTube/R2. Analisis paket lama disimpan sebagai riwayat |
-| `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` | 45 soal + kunci turunan, untuk dicoret-koreksi bidan |
+| `KUNCI-JAWABAN.md` | 45 kunci resmi per kunjungan + riwayat dua kunci turunan yang keliru. Menggantikan `KUNCI-JAWABAN-PERLU-VERIFIKASI.md` |
 | `README.md` | ikhtisar, alur layar, tabel pertanyaan terbuka |
 | `media/` | 6 video aktif (186 MB) + 11 video paket lama, **semua tidak ikut git** |

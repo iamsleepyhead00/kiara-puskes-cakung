@@ -70,21 +70,36 @@ window.KIARA_CONFIG = {
   ENABLE_WA_BUTTON: true,
 
   // ── SCORING ────────────────────────────────────────────────
-  // Folder "DATA BASE VIDEO" (5 Agu) memberi DUA topik per kunjungan,
-  // masing-masing 5 soal — jadi 10 soal per kunjungan. Contoh K.1:
-  // "Tanda Kehamilan" 5 soal + "1000 HPK" 5 soal.
+  // Setiap TOPIK berisi 5 soal, dan jumlah topik per kunjungan
+  // berbeda-beda. Jadi jumlah soal per kunjungan TIDAK seragam:
   //
-  // Berbeda dari asumsi 4 Agu (5 soal/sesi). Sepuluh soal digabung jadi
-  // satu pre-test dan satu post-test supaya struktur 13 kolom sheet tetap
-  // utuh — satu baris per kunjungan, satu skorPre, satu skorPost.
-  SOAL_PER_SESI: 10,
+  //   Kunjungan 1 : Tanda Kehamilan + 1000 HPK             → 10 soal
+  //   Kunjungan 2 : Gizi Ibu Hamil + KEK                   → 10 soal
+  //   Kunjungan 3 : Perawatan + Mitos + Anemia             → 15 soal
+  //   Kunjungan 4 : Hal Dihindari + Tanda Bahaya           → 10 soal
+  //
+  // Kunjungan 3 punya tiga topik karena puskesmas menambah topik Anemia
+  // (berprefiks K.3) pada paket 9 Agustus. Klien memilih mempertahankan
+  // semuanya daripada membuang soal atau memindahkannya ke kunjungan lain.
+  //
+  // Seluruh topik dalam satu kunjungan digabung jadi SATU pre-test dan
+  // SATU post-test, supaya struktur 13 kolom sheet tetap utuh — satu baris
+  // per kunjungan, satu skorPre, satu skorPost.
+  //
+  // Angka ini dipakai untuk memeriksa kewajaran, bukan untuk memotong:
+  // jumlah soal sebenarnya dihitung dari `setSoal` di content.js.
+  SOAL_PER_TOPIK: 5,
 
-  // 10 soal → 10 poin per soal. Skor: 0, 10, 20, ... 100.
-  // KKM 80 = 8 dari 10 benar.
+  // Skor = benar / jumlah soal × 100, dibulatkan.
+  //   10 soal → 0, 10, 20, … 100        KKM 80 = 8 dari 10
+  //   15 soal → 0, 7, 13, 20, … 100     KKM 80 = 12 dari 15
   //
-  // ⚠️ Kalau angka ini diubah, sesuaikan juga BATAS.KKM_DEFAULT dan
-  //    BATAS.POIN_PER_SOAL di gas/Code.gs LALU DEPLOY VERSI BARU —
-  //    endpoint menolak skor yang bukan kelipatan POIN_PER_SOAL.
+  // Persentase lulusnya sama (80%), jumlah soalnya beda.
+  //
+  // ⚠️ Karena jumlah soal tidak seragam, skor TIDAK selalu kelipatan 10.
+  //    `BATAS.POIN_PER_SOAL` di gas/Code.gs sudah dicabut dan validasinya
+  //    diganti "bilangan bulat 0–100". Kalau KKM diubah, sesuaikan juga
+  //    BATAS.KKM_DEFAULT di sana LALU DEPLOY VERSI BARU.
   KKM: 80,
 
   // ── JUMLAH SESI ────────────────────────────────────────────

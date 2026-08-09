@@ -1702,27 +1702,21 @@
     if (CFG.OFFLINE_MODE) p.push('OFFLINE_MODE masih true — data hanya tersimpan di HP ini');
     if (CFG.PLACEHOLDER_MODE) p.push('PLACEHOLDER_MODE masih true — gate materi dilepas otomatis');
 
-    // Berkas soal dari puskesmas tidak memuat kunci jawaban. Yang dipakai
-    // sekarang kunci turunan dari pedoman Buku KIA / standar ANC — harus
-    // diverifikasi bidan dulu, kalau tidak skornya bisa salah semua.
+    // Sisa set yang kuncinya masih turunan, bukan resmi dari puskesmas.
+    // Paket 9 Agustus menandai kunci dengan huruf tebal, jadi set aktif
+    // sudah resmi — yang tersisa hanya set yang ditahan.
     const turunan = Object.keys(CONTENT.setSoal)
       .filter((k) => CONTENT.setSoal[k].kunciTurunan)
       .map((k) => CONTENT.setSoal[k].nama);
     if (turunan.length) {
-      p.push('KUNCI JAWABAN BELUM DIVERIFIKASI BIDAN pada ' + turunan.length +
-             ' set (' + turunan.join(', ') + ') — berkas .docx puskesmas tidak memuat kuncinya');
+      p.push('KUNCI JAWABAN MASIH TURUNAN, BUKAN RESMI pada ' + turunan.length +
+             ' set (' + turunan.join(', ') + ') — harus diverifikasi bidan');
     }
 
-    // Topik yang punya soal tapi belum ada videonya.
-    const tanpaVideo = Object.keys(CONTENT.setSoal)
-      .filter((k) => CONTENT.setSoal[k].tanpaVideo)
-      .map((k) => CONTENT.setSoal[k].nama);
-    if (tanpaVideo.length) {
-      p.push('Topik tanpa video: ' + tanpaVideo.join(', ') + ' — pasien diuji tanpa materi');
-    }
-
-    // Jumlah soal per sesi harus sama dengan SOAL_PER_SESI, kalau tidak
-    // skornya bukan kelipatan POIN_PER_SOAL dan endpoint akan menolaknya.
+    // Jumlah soal per sesi TIDAK seragam — kunjungan 3 punya 15 soal
+    // (tiga topik), sisanya 10. Yang diperiksa: setiap sesi punya soal, dan
+    // jumlahnya kelipatan SOAL_PER_TOPIK. Kalau ada topik yang soalnya
+    // kurang dari 5, itu tanda berkas sumbernya terpotong.
     //
     // Hanya sesi yang bisa dijalankan yang diperiksa. Sesi 5–10 memang
     // sengaja nol soal — yang menahannya SESI_TERSEDIA, bukan kelalaian.
@@ -1730,9 +1724,13 @@
       .filter((s) => s.ke <= CFG.SESI_TERSEDIA)
       .forEach((s) => {
         const n = soalSesi(s.ke).length;
-        if (n !== CFG.SOAL_PER_SESI) {
-          p.push('Sesi ' + s.ke + ' punya ' + n + ' soal, seharusnya ' + CFG.SOAL_PER_SESI +
-                 ' — skor akan ditolak endpoint');
+        const topik = kunciSetSoal(s.ke).length;
+        if (!n) {
+          p.push('Sesi ' + s.ke + ' tidak punya soal sama sekali — pre-test akan kosong');
+        } else if (n !== topik * CFG.SOAL_PER_TOPIK) {
+          p.push('Sesi ' + s.ke + ' punya ' + n + ' soal dari ' + topik + ' topik, ' +
+                 'seharusnya ' + (topik * CFG.SOAL_PER_TOPIK) +
+                 ' — ada topik yang soalnya tidak lengkap');
         }
       });
 
