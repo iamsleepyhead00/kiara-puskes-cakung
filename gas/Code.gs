@@ -207,11 +207,24 @@ function validasiSimpan(p) {
      Pemeriksaan "kelipatan POIN_PER_SOAL" karena itu dicabut dan diganti
      batas bilangan bulat 0–100. Ini memang lebih longgar. Peredam lain tetap
      jalan: clamp KKM (kkm=0 tidak bisa membuat semua LULUS), throttle,
-     anti-injeksi formula, dan validasi kelurahan/puskesmas/nama/NIK. */
+     anti-injeksi formula, dan validasi kelurahan/puskesmas/nama/NIK.
+
+     Skor KOSONG ditolak, tidak lagi diperlakukan sebagai 0 (diubah 9 Agu).
+     Versi sebelumnya menulis 0 diam-diam kalau parameter skor hilang atau
+     kosong. Itu gagal tanpa suara: bug di aplikasi yang membuat skor tidak
+     terkirim akan menghasilkan baris bernilai 0 yang tampak sah di sheet,
+     dan bidan tidak punya cara membedakannya dari ibu yang benar-benar
+     menjawab salah semua. Lebih baik penyimpanan gagal terang-terangan.
+
+     Perhatikan Number(' ') === 0, jadi pemeriksaan kosong harus dilakukan
+     pada teks mentahnya lewat trim(), bukan setelah diubah ke angka. */
   var skor = [['Pre-Test', p.skorPre], ['Post-Test', p.skorPost]];
   for (var i = 0; i < skor.length; i++) {
-    var v = Number(skor[i][1] == null || skor[i][1] === '' ? 0 : skor[i][1]);
-    if (!bulatDi(v, 0, 100)) return skor[i][0] + ' harus bilangan bulat 0–100';
+    var mentah = skor[i][1];
+    if (mentah == null || String(mentah).trim() === '') {
+      return skor[i][0] + ' tidak terkirim';
+    }
+    if (!bulatDi(mentah, 0, 100)) return skor[i][0] + ' harus bilangan bulat 0–100';
   }
 
   return '';
@@ -258,7 +271,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 9, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 10, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
