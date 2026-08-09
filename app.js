@@ -1273,9 +1273,34 @@
     v.addEventListener('ended', () => {
       cekGateVideo(tonton.akum >= (v.duration || 0) * CFG.MIN_TONTON_PERSEN);
     });
+    /* Pesan galat lama hanya menulis "Video tidak bisa dimuat" tanpa alasan,
+       jadi laporan dari lapangan ("video X tidak bisa") tidak bisa dilacak:
+       jaringan putus, berkas hilang, dan codec tidak didukung semuanya
+       terlihat sama. MediaError membedakan keempatnya — tampilkan. */
     v.addEventListener('error', () => {
+      const e = v.error || {};
+      const sebab = {
+        1: 'Pemuatan dibatalkan.',
+        2: 'Jaringan terputus saat memuat video.',
+        3: 'Video rusak atau tidak bisa dibaca perangkat ini.',
+        4: 'Format video tidak didukung perangkat ini, atau berkasnya tidak ditemukan.'
+      }[e.code] || 'Penyebabnya tidak diketahui.';
+
+      const saran = e.code === 2
+        ? 'Coba lagi setelah sinyal stabil.'
+        : e.code === 4
+          ? 'Laporkan ke petugas — video ini perlu diperiksa.'
+          : 'Coba muat ulang halaman.';
+
+      console.error('[KIARA] video gagal:', {
+        url: m.url, kode: e.code, pesan: e.message,
+        networkState: v.networkState, readyState: v.readyState
+      });
+
       $('mt-shell').innerHTML =
-        '<div class="dok-kosong">Video tidak bisa dimuat.<br><span>' + m.url + '</span></div>';
+        '<div class="dok-kosong">Video tidak bisa dimuat.' +
+        '<br><span>' + sebab + ' ' + saran + '</span>' +
+        '<br><span>Kode ' + (e.code || '?') + ' &middot; ' + m.url + '</span></div>';
     });
     $('mt-shell').innerHTML = '';
     $('mt-shell').appendChild(v);

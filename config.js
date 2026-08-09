@@ -40,7 +40,16 @@ window.KIARA_CONFIG = {
     'Luar wilayah Cakung'
   ],
 
-  // 9 opsi. Dokumen menulis "Pustu Cakung barat" dua kali — duplikat dihapus.
+  // Label field-nya "Puskesmas Tempat Periksa" — jadi isinya tempat ibu
+  // memeriksakan kehamilan, bukan hanya tempat kelas berlangsung.
+  //
+  // 9 opsi awal dari dokumen puskesmas. Dokumen menulis "Pustu Cakung barat"
+  // dua kali — duplikat dihapus.
+  //
+  // ⚠️ Daftar ini DIDUPLIKASI di `PUSKESMAS_SAH` pada gas/Code.gs. Endpoint
+  //    menolak nilai yang tidak ada di daftar resminya, jadi menambah opsi
+  //    di sini SAJA membuat ibu yang memilihnya gagal simpan dengan pesan
+  //    "Puskesmas tidak dikenal". Harus diubah di DUA tempat, lalu DEPLOY.
   PUSKESMAS: [
     'Puskesmas Cakung',
     'Pustu Jatinegara',
@@ -50,7 +59,12 @@ window.KIARA_CONFIG = {
     'Pustu Penggilingan Elok',
     'Pustu Rawa Terate',
     'Pustu Ujung Menteng',
-    'Pustu Cakung Timur'
+    'Pustu Cakung Timur',
+    // Ditambah 9 Agu atas permintaan puskesmas — ibu yang periksa di luar
+    // jaringan puskesmas tetap boleh ikut kelas. Ditaruh paling bawah supaya
+    // puskesmas dan pustu tetap jadi pilihan pertama yang terlihat.
+    'Klinik',
+    'Praktik Bidan'
   ],
 
   // ── BACKEND ────────────────────────────────────────────────
@@ -64,9 +78,16 @@ window.KIARA_CONFIG = {
   SHEETS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbxD6D_gZrSOFR0kujsE0DdkHGpLz9qkGlJKNtKl-YiyaIq7fadoEAXLBqHGm4yVfxFP/exec',
 
   // ── WHATSAPP ───────────────────────────────────────────────
-  // Sumber: konsep KIARA.docx. Nomor ini BERBEDA dari FORMAT KIARA
-  // (dulu 085945371933) — pakai yang baru.
-  TARGET_PHONE: '6285889945829',
+  // Nomor tujuan laporan hasil. Diubah klien 9 Agustus jadi 6285945371933.
+  //
+  // Riwayatnya bolak-balik, jadi dicatat supaya tidak diubah balik keliru:
+  //   FORMAT KIARA.docx (31 Juli)  : 085945371933   → dipakai mockup v1.2
+  //   konsep KIARA.docx (2 Agu)    : 6285889945829  → sempat dipakai
+  //   instruksi klien (9 Agu)      : 6285945371933  → YANG DIPAKAI SEKARANG
+  //
+  // Nomor 9 Agustus ini sama dengan yang di FORMAT KIARA, hanya ditulis
+  // dengan awalan 62 alih-alih 0. Jadi klien kembali ke nomor semula.
+  TARGET_PHONE: '6285945371933',
   ENABLE_WA_BUTTON: true,
 
   // ── GRUP WHATSAPP KELAS IBU HAMIL ──────────────────────────

@@ -118,7 +118,9 @@ var KELURAHAN_SAH = [
 var PUSKESMAS_SAH = [
   'Puskesmas Cakung', 'Pustu Jatinegara', 'Pustu Cakung Barat',
   'Pustu Pulo Gebang', 'Pustu Penggilingan PIK', 'Pustu Penggilingan Elok',
-  'Pustu Rawa Terate', 'Pustu Ujung Menteng', 'Pustu Cakung Timur'
+  'Pustu Rawa Terate', 'Pustu Ujung Menteng', 'Pustu Cakung Timur',
+  // Ditambah 9 Agu — harus sama dengan PUSKESMAS di config.js.
+  'Klinik', 'Praktik Bidan'
 ];
 
 /* ══════════════════════════════════════════════════════════
@@ -271,7 +273,7 @@ function doGet(e) {
 
     // versi dinaikkan setiap file ini berubah — dipakai untuk memastikan
     // deployment yang aktif benar-benar versi terbaru.
-    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 10, kolom: JML_KOLOM });
+    return json({ ok: true, message: 'KIARA endpoint aktif', versi: 11, kolom: JML_KOLOM });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message ? err.message : err) });
   }
