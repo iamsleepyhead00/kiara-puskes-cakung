@@ -32,9 +32,12 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 
 **Yang sudah jalan dan terverifikasi:**
 
-- GitHub Pages aktif, seluruh perubahan sampai 9 Agustus sudah tayang
-- Backend Apps Script **ter-deploy pada `versi: 10` dan sinkron dengan repo**,
-  terverifikasi live 9 Agustus. Tidak ada lagi selisih repo vs deployment
+- GitHub Pages aktif, seluruh perubahan sampai 9 Agustus sudah tayang.
+  Commit terakhir: `daa7ecd`
+- Backend Apps Script ter-deploy pada `versi: 10` dan terverifikasi live.
+  ⚠️ **Repo sekarang `versi: 12` — belum di-deploy.** Bedanya berdampak:
+  opsi tempat periksa "Klinik/Praktik Bidan" belum dikenal deployment, jadi
+  ibu yang memilihnya GAGAL SIMPAN. Lihat bagian 7 no. 1
 - Simpan dan lookup dari origin `github.io` terbukti jalan — CORS beres
   (`Access-Control-Allow-Origin: *` di dua hop), baris mendarat di sheet
 - Waktu terukur 9 Agu pada `versi: 10`: simpan rata-rata **2.516 ms**
@@ -67,11 +70,21 @@ mengganti seluruh sumber konten sebelumnya. Blocker video praktis selesai:
 
 **Berubah 9 Agustus:** paket kunci jawaban resmi datang, topik Anemia masuk
 kunjungan 3 (jadi 15 soal), dan 3 video baru ditambahkan. Note grup WhatsApp
-dipasang di layar hasil. Backend naik ke `versi: 10` dan sudah di-deploy.
+dipasang di layar hasil. Backend naik `versi: 9` → 10 (di-deploy) → 11 → 12
+(belum di-deploy). Ikon splash diperbesar, opsi tempat periksa ditambah, nomor
+WhatsApp laporan diganti, dan pesan galat video diperjelas.
 
-**Sisa blocker sebelum dipakai pasien nyata:** endpoint Apps Script masih
-terbuka dan URL-nya ada di repo publik — lihat bagian 8. Selain itu tidak ada
-lagi yang menghalangi; kunci sudah resmi, materi lengkap, dan backend sinkron.
+**Sisa blocker sebelum dipakai pasien nyata:**
+
+1. **Deploy `Code.gs` ke `versi: 12`** — tanpa ini opsi Klinik/Praktik Bidan
+   gagal simpan
+2. **Endpoint Apps Script masih terbuka** dan URL-nya ada di repo publik —
+   lihat bagian 8
+3. **Tautan grup WhatsApp publik** — admin grup harus menyalakan "Setujui
+   anggota baru" dulu, lihat bagian 8
+
+Kunci jawaban sudah resmi dan materi sudah lengkap, jadi dua hal itu bukan
+penghalang lagi.
 
 ---
 
@@ -104,6 +117,145 @@ Jangan diubah tanpa instruksi baru.
 ---
 
 ## 4. Yang dikerjakan di sesi ini
+
+### Ronde 3 — 9 Agustus (paling baru)
+
+Empat commit, urut: `fb1b72c` → `653372d` → `b6f5a5e` → `daa7ecd`.
+
+**Note grup WhatsApp — `fb1b72c`.** Permintaan klien: *"Paling terakhir sebelum
+submit ada pilihan. Jika ada pertanyaan dari semua materi di atas, silahkan
+gabung ke grup kelas ibu hamil online."* Dibuat sebagai note, bukan tombol
+utama.
+
+Dipasang di layar hasil **S8** (lulus KKM) dan **S12** (belum KKM), tepat
+sebelum tombol aksi. TIDAK dipasang di tengah alur: membuka WhatsApp
+memindahkan ibu keluar dari browser, dan di Android bermemori kecil halaman di
+latar bisa dimatikan sistem. Kalau itu terjadi sebelum penyimpanan selesai,
+hasil ibu hilang. Di S8 posisinya tetap "sebelum submit" dalam arti sebelum
+tombol Kirim Hasil ke WhatsApp. S12 ikut dipasangi karena ibu yang belum
+mencapai KKM justru paling butuh tempat bertanya.
+
+Dikendalikan `CFG.WA_GRUP_LINK`. Kosong = note hilang, tanpa menyentuh HTML.
+Tautan dibersihkan dari parameter pelacak (`?s=sh&p=a&ilr=0` dibuang).
+
+`isiNoteGrup()` menyaring tautan dengan regex ketat
+`^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]+$`. Yang ditolak: `http` biasa,
+domain menyamar seperti `chat.whatsapp.com.evil.com`, skema `javascript:`, dan
+`wa.me` (chat pribadi, bukan grup). Alasannya yang mengklik adalah ibu hamil
+yang percaya tautan itu dari puskesmas.
+
+Tidak ada kolom baru di sheet — bergabung grup tidak direkam.
+
+`style.css` ditambah `a.tlink{text-decoration:none}`. Kelas `.tlink`
+sebelumnya hanya dipakai di `<span>`; pada `<a>` garis bawah bawaan browser
+ikut menutupi ikon, padahal desainnya sengaja hanya menggarisbawahi teks.
+
+**Ikon splash diperbesar — `653372d`.** 42px → 62px. Ikon terlihat jauh lebih
+kecil dari angka px-nya karena Material Symbols menyisakan ruang kosong di
+dalam viewBox: figur ibu hamil hanya mengisi ±sepertiga lebar dan 83% tinggi
+kotak 960×960. Pada 42px yang benar-benar terlihat cuma ±35px tinggi dan ±14px
+lebar, jadi terkesan mungil di dalam kotak `.sp-logo` yang 92px. Kotak dan
+animasi halo tidak diubah. Ikon header (`.ah-i svg`, 17px) juga tidak diubah
+karena aturan itu dipakai bersama seluruh ikon Lucide di semua header.
+
+**Tiga permintaan klien — `b6f5a5e`.**
+
+1. Opsi tempat periksa ditambah "Klinik" dan "Praktik Bidan"
+2. Nomor WhatsApp laporan diganti jadi `6285945371933`
+3. Laporan "video 1000 HPK tidak bisa"
+
+Nomor WhatsApp riwayatnya bolak-balik, dicatat di `config.js` supaya tidak
+diubah balik keliru:
+
+| Sumber | Nomor |
+|---|---|
+| FORMAT KIARA.docx (31 Juli) | `085945371933` |
+| konsep KIARA.docx (2 Agu) | `6285889945829` |
+| instruksi klien (9 Agu) | `6285945371933` ← dipakai sekarang |
+
+Nomor 9 Agustus itu sama dengan yang di FORMAT KIARA, hanya ditulis dengan
+awalan 62. Jadi klien kembali ke nomor semula.
+
+**Video 1000 HPK — berkasnya TERBUKTI SEHAT.** Ditelusuri dengan membongkar
+struktur MP4 dan membandingkannya dengan tiga video yang normal:
+
+| Pemeriksaan | Hasil |
+|---|---|
+| Ukuran disk vs server | 53.329.939 byte, **sama persis** |
+| Codec | H.264 (`avc1`) + AAC (`mp4a`), brand `mp42` |
+| Faststart | `moov` di depan `mdat` — bisa diputar sambil mengunduh |
+| Durasi / bitrate | 4m59s, 1,43 Mbps |
+| Unduh penuh dari Pages | berhasil, 8,5 MB/s |
+
+Satu-satunya beda dari video lain: urutan track (audio dulu, video kedua). Itu
+tidak menghalangi browser. Jadi kegagalannya di perangkat, bukan di berkas.
+
+Masalahnya pesan galat lama hanya menulis "Video tidak bisa dimuat" tanpa
+alasan — jaringan putus, berkas hilang, dan codec tidak didukung semuanya
+terlihat sama dan tidak bisa dilacak. Sekarang `MediaError` dibaca dan
+dibedakan:
+
+| Kode | Arti | Yang ditampilkan |
+|---|---|---|
+| 1 | ABORTED | pemuatan dibatalkan |
+| 2 | NETWORK | jaringan terputus, saran coba lagi saat sinyal stabil |
+| 3 | DECODE | berkas rusak / tidak terbaca perangkat |
+| 4 | SRC_NOT_SUPPORTED | format tidak didukung atau berkas tidak ditemukan |
+
+Kode, pesan, `networkState`, dan `readyState` ikut ke console.
+
+**Belum ada jawaban kodenya berapa dari klien.** Langkah lanjut tergantung itu:
+kode 2 berarti murni jaringan (51 MB berat untuk kuota HP, solusinya kompres),
+kode 4 aneh karena URL-nya jelas 200 (kemungkinan cache lama), kode 3 berarti
+perangkatnya tidak sanggup decode (perlu re-encode profil lebih rendah).
+Kemungkinan lain: videonya jalan tapi tombol "Materi Berikutnya" tidak muncul,
+karena `ANTI_SKIP` menahannya sampai 90% ditonton — dan 90% dari 4m59s itu
+**269 detik**.
+
+**Penyederhanaan opsi + label — `daa7ecd`.** Setelah melihat dropdown-nya,
+klien minta "Klinik" dan "Praktik Bidan" digabung jadi satu
+"Klinik/Praktik Bidan" (11 opsi → 10), dan label "Puskesmas Tempat Periksa"
+diganti jadi **"Tempat Periksa"**.
+
+Label diganti di semua tempat yang dilihat ibu, bukan cuma label form: label
+field S2, baris hasil S8, placeholder dropdown (dulu menyebut puskesmas /
+pustu), pesan galat validasi, dan dua template pesan WhatsApp.
+
+Yang **sengaja tidak diubah**: kolom sheet tetap bernama `Puskesmas`
+(`HEADER_HARAPAN`, aturan 13 kolom) dan nama field payload tetap `puskesmas`.
+Mengubahnya memutus jalur simpan dan memaksa bidan mengganti judul kolom di
+spreadsheet yang sudah berjalan.
+
+Efek samping yang harus diurus: "Tempat Periksa" panjangnya 14 karakter,
+sementara kolom label di `waTemplateHasil` hanya 12. Seluruh 11 baris di blok
+itu dilebarkan jadi 14 supaya titik dua-nya tetap lurus di WhatsApp.
+`waTemplateRekap` sudah 16 karakter, cukup ditambah 2 spasi. Uji sekarang
+memeriksa perataan ini otomatis.
+
+**Perubahan berkas ronde 3:**
+
+| Berkas | Perubahan |
+|---|---|
+| `config.js` | `WA_GRUP_LINK`, `TARGET_PHONE` baru, opsi Klinik/Praktik Bidan, peringatan duplikasi daftar |
+| `gas/Code.gs` | `PUSKESMAS_SAH` + Klinik/Praktik Bidan, `versi: 10` → 12 |
+| `app.js` | `isiNoteGrup()`, `MediaError` dibedakan, placeholder & pesan galat diganti |
+| `content.js` | dua template WhatsApp: label + perataan |
+| `index.html` | note grup di S8 & S12, label Tempat Periksa, versi asset |
+| `style.css` | ikon splash 62px, `a.tlink` |
+
+Versi asset akhir: `style.css?v=13`, `config.js?v=15`, `content.js?v=10`,
+`app.js?v=23`, `visit-tracker.js?v=5`.
+
+**Keputusan klien di ronde ini:**
+
+- Item `perluKonfirmasi` (K.3 Mitos no. 1 dan dua di `setSoalDitahan`)
+  **diabaikan** — kunci resmi puskesmas dipakai apa adanya. Penanda itu hanya
+  muncul di `console.warn`, tidak terlihat ibu, jadi tidak ada dampak ke alur
+- Revisi "puskesmas tempat periksa" diselesaikan klien sendiri: labelnya
+  sempat diubah jadi "Puskesmas Tempat Periksa" tanpa field baru, jadi
+  struktur 13 kolom tidak terganggu
+
+---
 
 ### Paket konten 9 Agustus — kunci jawaban resmi akhirnya datang
 
@@ -607,10 +759,18 @@ Kandidat lama `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` (99 MB) tidak dipakai —
 puskesmas mengirim videonya sendiri, dan isi soal Mitos juga sudah berganti
 dari mitos TTD ke mitos kehamilan.
 
-### 5.3 ~~Deployment Apps Script tertinggal dari repo~~ — SELESAI 9 Agustus
+### 5.3 Deployment Apps Script tertinggal dari repo — TERBUKA LAGI
 
-**Blocker ini sudah tidak ada.** Deployment dan repo dua-duanya `versi: 10`,
-diverifikasi lewat `?action=ping`.
+Sempat lunas 9 Agustus saat deployment dan repo dua-duanya `versi: 10`.
+**Terbuka lagi di hari yang sama**: repo naik ke `versi: 12` (opsi tempat
+periksa Klinik/Praktik Bidan) sementara deployment masih `versi: 10`.
+
+Dampaknya sekarang: ibu yang memilih "Klinik/Praktik Bidan" **gagal simpan**
+dengan pesan "Puskesmas tidak dikenal". Opsi lain aman.
+
+Ini persoalan yang paling sering kambuh di proyek ini, jadi perlakukan setiap
+perubahan `gas/Code.gs` sebagai dua langkah, bukan satu: ubah repo, LALU
+deploy.
 
 Riwayatnya panjang karena selisih ini muncul berulang: `versi: 5` → 7 → 8 → 9
 → 10. Pola kegagalannya selalu sama — file di-Save di editor Apps Script tapi
@@ -652,7 +812,7 @@ sendiri karena `media/` isinya aset klien.
 | 5 | Wilayah **TTD atau MMS** | tidak memengaruhi materi maupun kunci lagi — paket 9 Agu satu set dan kuncinya sudah resmi. `config.js` masih `TTD`, sekarang tidak berdampak |
 | 6 | Kunjungan 5+ | puskesmas baru mengirim K.1–K.4. `sesiDitahan` sekarang kosong |
 | 7 | Template pesan WhatsApp | dikarang sendiri |
-| 8 | ~~Revisi "puskesmas tempat periksa"~~ | **SELESAI 9 Agu** — diselesaikan klien sendiri di luar aplikasi. Tidak ada perubahan kode. `PUSKESMAS_SAH` di `Code.gs` tetap 9 item dan identik dengan `config.js`. Kalau nanti ada opsi baru, wajib masuk DUA tempat lalu deploy |
+| 8 | ~~Revisi "puskesmas tempat periksa"~~ | **SELESAI 9 Agu.** Labelnya sekarang "Tempat Periksa" dan daftarnya 10 opsi termasuk "Klinik/Praktik Bidan". Tidak ada field baru, jadi struktur 13 kolom utuh. `PUSKESMAS_SAH` di `Code.gs` harus selalu identik dengan `PUSKESMAS` di `config.js` — uji otomatis sudah memeriksa ini |
 | 9 | ~~Link grup WhatsApp kelas ibu hamil online~~ | **SELESAI 9 Agu** — commit `fb1b72c`, note di S8 + S12, `WA_GRUP_LINK` di `config.js`. Sisa tindakan admin grup: nyalakan "Setujui anggota baru", lihat bagian 8 |
 | 10 | **Rujukan halaman Buku KIA per topik** | satu-satunya revisi klien yang belum dikerjakan. Butuh 8 nomor halaman dari bidan — tidak boleh dikarang. Plus keputusan: apakah baca Buku KIA membuka post-test? Kalau ya, anti-skip jadi sia-sia; kalau tidak, manfaatnya kecil |
 
@@ -666,15 +826,28 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | ~~Paste ulang `Code.gs` + deploy versi baru~~ | **SELESAI 9 Agu** — deployment sekarang `versi: 10`, terverifikasi lewat `?action=ping`. Skor 15 soal dan penolakan skor kosong dua-duanya terbukti jalan di sistem hidup |
-| 2 | Tanya bidan soal K.3 Mitos no. 1 | **klien memilih mengabaikan 9 Agu.** Kunci resmi puskesmas dipakai apa adanya. Penanda `perluKonfirmasi` hanya muncul di `console.warn`, tidak terlihat ibu — jadi tidak ada dampak ke alur |
+| 1 | **Deploy `Code.gs` ke `versi: 12`** | **WAJIB, belum dilakukan.** Deployment masih `versi: 10`. Tanpa ini ibu yang memilih "Klinik/Praktik Bidan" **gagal simpan** dengan pesan "Puskesmas tidak dikenal". Versi 11 boleh dilewati, isinya sudah termuat di 12. Cek: `?action=ping` balas `versi: 12` |
+| 2 | Laporkan kode galat video 1000 HPK | buka videonya, layar sekarang menampilkan kode MediaError-nya. Berkas sudah terbukti sehat, jadi kodenya yang menentukan langkah berikutnya — lihat ronde 3 di bagian 4 |
 | 3 | Jalankan `hapusUji()` di Apps Script | **belum.** Ada 8 baris uji NIK `9999999999999999` (kunjungan 1–6, 8, 9) dari uji 9 Agu. `hapusUji()` hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`, jadi data ibu asli aman |
-| 4 | Jawab 1 revisi yang tersisa | lihat bagian 6 no. 10 — rujukan halaman Buku KIA. No. 8 dan 9 sudah selesai |
+| 4 | Nyalakan "Setujui anggota baru" di grup WhatsApp | lihat bagian 8. Kalau belum, kosongkan `WA_GRUP_LINK` dulu |
+| 5 | Jawab 1 revisi yang tersisa | lihat bagian 6 no. 10 — rujukan halaman Buku KIA. No. 8 dan 9 sudah selesai |
+| 5b | ~~Tanya bidan soal K.3 Mitos no. 1~~ | **klien memilih mengabaikan 9 Agu.** Kunci resmi puskesmas dipakai apa adanya. Penanda `perluKonfirmasi` hanya muncul di `console.warn`, tidak terlihat ibu — tidak ada dampak ke alur |
 | 5 | Konfirmasi judul sesi 5–10 | diambil dari nama slide deck, belum tentu sejajar dengan penomoran K.1–K.4 |
 | 6 | Ganti deployment Apps Script atau jadikan repo private | **sebelum** dipakai pasien nyata |
 | 7 | Tulis batas scope + termin bayar ke klien | lihat bagian 9 |
 | 8 | Hapus 3 video duplikat (160 MB) | opsional, lihat 5.4 |
 | 9 | Pindahkan repo keluar folder kantor | opsional, lihat bagian 8 |
+
+**Sudah selesai 9 Agustus:**
+
+- Deploy `Code.gs` ke `versi: 10` — terverifikasi live. Seluruh 16 kemungkinan
+  skor 15 soal diterima, skor kosong ditolak, tidak ada baris duplikat pada
+  5 submit bersamaan
+- Note grup WhatsApp di S8 + S12
+- Ikon splash diperbesar 42px → 62px
+- Nomor WhatsApp laporan diganti jadi `6285945371933`
+- Opsi tempat periksa "Klinik/Praktik Bidan", label jadi "Tempat Periksa"
+- Pesan galat video membedakan empat kode `MediaError`
 
 **Sudah selesai 6–7 Agustus:**
 

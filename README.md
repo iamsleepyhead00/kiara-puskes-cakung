@@ -201,8 +201,12 @@ Persentase lulusnya sama (80%), jumlah soalnya beda. Skor dihitung
 27, 33, … 100.
 
 **Karena itu validasi "skor harus kelipatan 10" di `gas/Code.gs` dicabut** dan
-diganti batas bilangan bulat 0–100. Kalau `Code.gs` belum di-deploy ke `versi: 9`,
-**semua penyimpanan kunjungan 3 akan gagal.**
+diganti batas bilangan bulat 0–100. Ini sudah di-deploy dan terverifikasi pada
+`versi: 10`: seluruh 16 kemungkinan skor 15 soal diterima, dan garis LULUS
+jatuh tepat di 12/15.
+
+Sejak `versi: 10`, skor **kosong** juga ditolak (`"Post-Test tidak terkirim"`)
+alih-alih ditulis 0 diam-diam. Skor 0 yang sungguhan tetap diterima.
 
 Peredam lain tetap jalan: clamp KKM, throttle, anti-injeksi formula, dan validasi
 kelurahan/puskesmas/nama/NIK.
@@ -405,13 +409,18 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 
 | # | Item | Lokasi | Kenapa penting |
 |---|---|---|---|
-| 1 | **Deploy versi baru Apps Script** | `gas/Code.gs` | Validasi "skor harus kelipatan 10" sudah dicabut karena kunjungan 3 punya 15 soal. Tanpa deploy, **semua penyimpanan kunjungan 3 gagal** — skornya 7/13/27/33 dst dan ditolak deployment lama. Cek berhasil: `?action=ping` balas `versi: 9`. |
-| 2 | **Tanya bidan: K.3 Mitos no. 1** | `content.js` → `perluKonfirmasi` | Kunci resmi "Salah" untuk *"wajib periksa hamil rutin"*, bertentangan dengan no. 5 di set yang sama. Ditulis apa adanya. Lihat bawah. |
-| 3 | **Video untuk 2 topik** | `content.js` → `sesi[2].materi`, `sesi[3].materi` | K.3 "Mitos dan Fakta" dan K.4 "Tanda Bahaya" punya soal tanpa video. Pasien diuji tanpa materi. |
-| 4 | **Hosting video** | `.gitignore` | 186 MB semuanya lolos batas GitHub, jadi bisa ikut repo. Belum diputuskan: repo publik atau YouTube unlisted. |
-| 5 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. |
-| 6 | **Wilayah TTD atau MMS** | `config.js` → `WILAYAH` | Tidak lagi memengaruhi materi, tapi masih memengaruhi kunci soal K.1 no. 5. |
-| 7 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
+| 1 | **Deploy `Code.gs` ke `versi: 12`** | `gas/Code.gs` | Deployment masih `versi: 10`. Opsi tempat periksa "Klinik/Praktik Bidan" belum dikenal backend, jadi ibu yang memilihnya **gagal simpan** dengan pesan "Puskesmas tidak dikenal". Cek berhasil: `?action=ping` balas `versi: 12`. |
+| 2 | **Setelan grup WhatsApp** | `config.js` → `WA_GRUP_LINK` | Tautan undangan grup ada di repo publik. Di dalam grup, nomor HP antar anggota saling terlihat — itu data ibu hamil. Nyalakan "Setujui anggota baru", atau kosongkan `WA_GRUP_LINK` dulu. |
+| 3 | **Endpoint Apps Script terbuka** | `config.js` → `SHEETS_ENDPOINT` | URL memberi akses tulis ke sheet bagi siapa pun yang memilikinya, dan repo publik berarti bisa ditemukan pemindai. Ganti deployment (URL baru) atau jadikan repo private. |
+| 4 | **Jalankan `hapusUji()`** | Apps Script | 8 baris uji NIK `9999999999999999` masih di sheet. Fungsi itu hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`. |
+| 5 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. Ditahan, tidak dipakai. |
+| 6 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
+| 7 | **Rujukan halaman Buku KIA** | belum ada di kode | Satu-satunya revisi klien yang belum dikerjakan. Butuh 8 nomor halaman dari bidan. |
+
+**Sudah selesai:** kunci jawaban resmi (bukan turunan lagi), video untuk seluruh
+9 topik aktif, hosting video di repo, dan wilayah TTD/MMS yang kini tidak lagi
+memengaruhi konten aktif. Item `perluKonfirmasi` diabaikan atas keputusan klien
+9 Agustus — kunci resmi puskesmas dipakai apa adanya.
 
 Saat aplikasi dibuka, semua item yang masih tersisa muncul otomatis sebagai
 peringatan di **console browser**.
