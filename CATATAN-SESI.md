@@ -33,11 +33,14 @@ Ini menggantikan bank soal Buku Pegangan Fasilitator dan paket video TTD/MMS.
 **Yang sudah jalan dan terverifikasi:**
 
 - GitHub Pages aktif, seluruh perubahan sampai 9 Agustus sudah tayang.
-  Commit terakhir: `daa7ecd`
-- Backend Apps Script ter-deploy pada `versi: 10` dan terverifikasi live.
-  ⚠️ **Repo sekarang `versi: 12` — belum di-deploy.** Bedanya berdampak:
-  opsi tempat periksa "Klinik/Praktik Bidan" belum dikenal deployment, jadi
-  ibu yang memilihnya GAGAL SIMPAN. Lihat bagian 7 no. 1
+  Commit terakhir: `6a70f07`
+- Backend Apps Script **ter-deploy pada `versi: 12` dan sinkron dengan repo**,
+  terverifikasi live 9 Agustus lewat `?action=ping`
+- **Seluruh 10 opsi tempat periksa diuji satu per satu ke endpoint hidup dan
+  semuanya diterima**, termasuk "Klinik/Praktik Bidan". `Klinik` dan
+  `Praktik Bidan` yang terpisah kini ditolak — itu memang benar, karena kalau
+  ada HP yang masih memegang `config.js` lama, penyimpanannya gagal
+  terang-terangan alih-alih menyelipkan nilai tak dikenal ke sheet bidan
 - Simpan dan lookup dari origin `github.io` terbukti jalan — CORS beres
   (`Access-Control-Allow-Origin: *` di dua hop), baris mendarat di sheet
 - Waktu terukur 9 Agu pada `versi: 10`: simpan rata-rata **2.516 ms**
@@ -70,21 +73,21 @@ mengganti seluruh sumber konten sebelumnya. Blocker video praktis selesai:
 
 **Berubah 9 Agustus:** paket kunci jawaban resmi datang, topik Anemia masuk
 kunjungan 3 (jadi 15 soal), dan 3 video baru ditambahkan. Note grup WhatsApp
-dipasang di layar hasil. Backend naik `versi: 9` → 10 (di-deploy) → 11 → 12
-(belum di-deploy). Ikon splash diperbesar, opsi tempat periksa ditambah, nomor
-WhatsApp laporan diganti, dan pesan galat video diperjelas.
+dipasang di layar hasil. Backend naik `versi: 9` → 10 → 11 → **12, dan versi 12
+sudah di-deploy serta diuji**. Ikon splash diperbesar, opsi tempat periksa
+ditambah, nomor WhatsApp laporan diganti, dan pesan galat video diperjelas.
 
 **Sisa blocker sebelum dipakai pasien nyata:**
 
-1. **Deploy `Code.gs` ke `versi: 12`** — tanpa ini opsi Klinik/Praktik Bidan
-   gagal simpan
-2. **Endpoint Apps Script masih terbuka** dan URL-nya ada di repo publik —
+1. **Endpoint Apps Script masih terbuka** dan URL-nya ada di repo publik —
    lihat bagian 8
-3. **Tautan grup WhatsApp publik** — admin grup harus menyalakan "Setujui
+2. **Tautan grup WhatsApp publik** — admin grup harus menyalakan "Setujui
    anggota baru" dulu, lihat bagian 8
+3. **`hapusUji()` belum dijalankan** — baris uji masih ada di sheet bidan
 
-Kunci jawaban sudah resmi dan materi sudah lengkap, jadi dua hal itu bukan
-penghalang lagi.
+Kunci jawaban sudah resmi, materi lengkap, dan backend sinkron — tiga hal itu
+bukan penghalang lagi. Yang tersisa semuanya tindakan di akun Google/WhatsApp
+user, bukan pekerjaan kode.
 
 ---
 
@@ -484,11 +487,15 @@ tiga ditunda karena menunggu jawaban — lihat bagian 6.
 **Kelurahan "Luar wilayah Cakung".** Ibu dari luar wilayah tetap boleh ikut
 kelas. Ditaruh paling bawah supaya kelurahan Cakung tetap terlihat lebih dulu.
 
-> ⚠️ **INI MEMBUAT PASTE ULANG `Code.gs` JADI WAJIB, BUKAN OPSIONAL.**
+> ⚠️ **CATATAN HISTORIS 6 AGUSTUS — SUDAH LUNAS.** Keadaan yang digambarkan di
+> bawah ini berlaku saat itu, bukan sekarang. Deployment kini `versi: 12` dan
+> sinkron dengan repo; lihat 5.3. Ditinggalkan di sini karena pola masalahnya
+> terulang beberapa kali dan berguna sebagai contoh.
+>
 > Daftar kelurahan ada di dua tempat: `config.js` untuk dropdown, dan
-> `KELURAHAN_SAH` di `gas/Code.gs` untuk validasi. Dua-duanya sudah diubah di
-> repo, tapi **deployment masih pakai daftar lama**. Sebelum di-deploy, ibu
-> yang memilih "Luar wilayah Cakung" akan **gagal simpan** — ditolak
+> `KELURAHAN_SAH` di `gas/Code.gs` untuk validasi. Waktu itu dua-duanya sudah
+> diubah di repo, tapi deployment masih pakai daftar lama, sehingga ibu yang
+> memilih "Luar wilayah Cakung" **gagal simpan** — ditolak
 > `"Kelurahan tidak dikenali"`.
 >
 > Aman untuk sekarang karena GitHub Pages belum nyala, jadi belum ada pasien
@@ -759,18 +766,34 @@ Kandidat lama `TTD/7-Video-TTD-Mitos-dan-Fakta.mp4` (99 MB) tidak dipakai —
 puskesmas mengirim videonya sendiri, dan isi soal Mitos juga sudah berganti
 dari mitos TTD ke mitos kehamilan.
 
-### 5.3 Deployment Apps Script tertinggal dari repo — TERBUKA LAGI
+### 5.3 ~~Deployment Apps Script tertinggal dari repo~~ — SELESAI 9 Agustus
 
-Sempat lunas 9 Agustus saat deployment dan repo dua-duanya `versi: 10`.
-**Terbuka lagi di hari yang sama**: repo naik ke `versi: 12` (opsi tempat
-periksa Klinik/Praktik Bidan) sementara deployment masih `versi: 10`.
+Deployment dan repo dua-duanya `versi: 12`, diverifikasi lewat `?action=ping`.
 
-Dampaknya sekarang: ibu yang memilih "Klinik/Praktik Bidan" **gagal simpan**
-dengan pesan "Puskesmas tidak dikenal". Opsi lain aman.
+**Ini persoalan yang paling sering kambuh di proyek ini** — selisihnya muncul
+berulang: `versi: 5` → 7 → 8 → 9 → 10 → 12, dan dalam satu hari saja (9 Agustus)
+sempat terbuka-tutup dua kali. Pola kegagalannya selalu sama: file di-Save di
+editor Apps Script tapi **Deploy → Manage deployments → New version** tidak
+dijalankan, sehingga URL yang dipakai aplikasi tetap menyajikan kode lama.
 
-Ini persoalan yang paling sering kambuh di proyek ini, jadi perlakukan setiap
-perubahan `gas/Code.gs` sebagai dua langkah, bukan satu: ubah repo, LALU
-deploy.
+Karena itu perlakukan setiap perubahan `gas/Code.gs` sebagai **dua langkah,
+bukan satu**: ubah repo, LALU deploy.
+
+Cara memastikan, bukan berasumsi: `?action=ping` harus membalas nomor `versi`
+yang sama dengan yang ada di `gas/Code.gs`. Dua kali dalam sesi 9 Agustus,
+uji yang menunjukkan perilaku tidak berubah sama sekali-lah yang mengungkap
+Save-tanpa-deploy — bukan pemeriksaan versi, karena versinya belum dilihat.
+
+Yang akhirnya terbawa deploy versi 10 dan 12:
+
+1. `KELURAHAN_SAH` + "Luar wilayah Cakung"
+2. **Perampingan `handleSave`** — 4 pembacaan sheet penuh jadi 1. Ini yang
+   bikin "Menyimpan hasil..." lama. Perbaikan sisi frontend (pra-ambil
+   riwayat, pemanasan container) sudah jalan begitu di-push, tidak menunggu
+   deploy
+3. `BATAS.POIN_PER_SOAL` dicabut → skor 15 soal (7, 13, 27, 33, …) diterima
+4. Skor kosong ditolak, tidak lagi ditulis 0 diam-diam
+5. `PUSKESMAS_SAH` + "Klinik/Praktik Bidan"
 
 Riwayatnya panjang karena selisih ini muncul berulang: `versi: 5` → 7 → 8 → 9
 → 10. Pola kegagalannya selalu sama — file di-Save di editor Apps Script tapi
@@ -826,7 +849,7 @@ dianggap final.
 
 | # | Tindakan | Catatan |
 |---|---|---|
-| 1 | **Deploy `Code.gs` ke `versi: 12`** | **WAJIB, belum dilakukan.** Deployment masih `versi: 10`. Tanpa ini ibu yang memilih "Klinik/Praktik Bidan" **gagal simpan** dengan pesan "Puskesmas tidak dikenal". Versi 11 boleh dilewati, isinya sudah termuat di 12. Cek: `?action=ping` balas `versi: 12` |
+| 1 | ~~Deploy `Code.gs` ke `versi: 12`~~ | **SELESAI 9 Agu.** Diverifikasi: `?action=ping` balas `versi: 12`, dan seluruh 10 opsi tempat periksa diuji satu per satu ke endpoint hidup — semuanya diterima |
 | 2 | Laporkan kode galat video 1000 HPK | buka videonya, layar sekarang menampilkan kode MediaError-nya. Berkas sudah terbukti sehat, jadi kodenya yang menentukan langkah berikutnya — lihat ronde 3 di bagian 4 |
 | 3 | Jalankan `hapusUji()` di Apps Script | **belum.** Ada 8 baris uji NIK `9999999999999999` (kunjungan 1–6, 8, 9) dari uji 9 Agu. `hapusUji()` hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`, jadi data ibu asli aman |
 | 4 | Nyalakan "Setujui anggota baru" di grup WhatsApp | lihat bagian 8. Kalau belum, kosongkan `WA_GRUP_LINK` dulu |
@@ -840,9 +863,11 @@ dianggap final.
 
 **Sudah selesai 9 Agustus:**
 
-- Deploy `Code.gs` ke `versi: 10` — terverifikasi live. Seluruh 16 kemungkinan
-  skor 15 soal diterima, skor kosong ditolak, tidak ada baris duplikat pada
-  5 submit bersamaan
+- Deploy `Code.gs` ke `versi: 10` lalu `versi: 12` — dua-duanya terverifikasi
+  live. Pada versi 10: seluruh 16 kemungkinan skor 15 soal diterima, skor
+  kosong ditolak, tidak ada baris duplikat pada 5 submit bersamaan. Pada
+  versi 12: seluruh 10 opsi tempat periksa diterima, opsi lama yang sudah
+  dihapus ditolak
 - Note grup WhatsApp di S8 + S12
 - Ikon splash diperbesar 42px → 62px
 - Nomor WhatsApp laporan diganti jadi `6285945371933`

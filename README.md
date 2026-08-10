@@ -409,13 +409,18 @@ dibiarkan sebagai penanda. Jangan kerjakan sampai ada instruksi baru.
 
 | # | Item | Lokasi | Kenapa penting |
 |---|---|---|---|
-| 1 | **Deploy `Code.gs` ke `versi: 12`** | `gas/Code.gs` | Deployment masih `versi: 10`. Opsi tempat periksa "Klinik/Praktik Bidan" belum dikenal backend, jadi ibu yang memilihnya **gagal simpan** dengan pesan "Puskesmas tidak dikenal". Cek berhasil: `?action=ping` balas `versi: 12`. |
-| 2 | **Setelan grup WhatsApp** | `config.js` → `WA_GRUP_LINK` | Tautan undangan grup ada di repo publik. Di dalam grup, nomor HP antar anggota saling terlihat — itu data ibu hamil. Nyalakan "Setujui anggota baru", atau kosongkan `WA_GRUP_LINK` dulu. |
-| 3 | **Endpoint Apps Script terbuka** | `config.js` → `SHEETS_ENDPOINT` | URL memberi akses tulis ke sheet bagi siapa pun yang memilikinya, dan repo publik berarti bisa ditemukan pemindai. Ganti deployment (URL baru) atau jadikan repo private. |
-| 4 | **Jalankan `hapusUji()`** | Apps Script | 8 baris uji NIK `9999999999999999` masih di sheet. Fungsi itu hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`. |
-| 5 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. Ditahan, tidak dipakai. |
-| 6 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
-| 7 | **Rujukan halaman Buku KIA** | belum ada di kode | Satu-satunya revisi klien yang belum dikerjakan. Butuh 8 nomor halaman dari bidan. |
+| 1 | **Setelan grup WhatsApp** | `config.js` → `WA_GRUP_LINK` | Tautan undangan grup ada di repo publik. Di dalam grup, nomor HP antar anggota saling terlihat — itu data ibu hamil. Nyalakan "Setujui anggota baru", atau kosongkan `WA_GRUP_LINK` dulu. |
+| 2 | **Endpoint Apps Script terbuka** | `config.js` → `SHEETS_ENDPOINT` | URL memberi akses tulis ke sheet bagi siapa pun yang memilikinya, dan repo publik berarti bisa ditemukan pemindai. Ganti deployment (URL baru) atau jadikan repo private. |
+| 3 | **Jalankan `hapusUji()`** | Apps Script | Baris uji NIK `9999999999999999` masih di sheet. Fungsi itu hanya menyapu baris yang NIK **dan** namanya cocok `UJI COBA - HAPUS`, jadi data ibu asli aman. |
+| 4 | **Kunjungan untuk soal Imunisasi** | `content.js` → `setSoalDitahan` | Berkasnya tanpa prefiks K, belum jelas kunjungan ke berapa. Ditahan, tidak dipakai. |
+| 5 | **Template pesan WhatsApp** | `content.js` → `waTemplateHasil` | Dokumen tidak memuat format pesan. Perlu disetujui bidan. |
+| 6 | **Rujukan halaman Buku KIA** | belum ada di kode | Satu-satunya revisi klien yang belum dikerjakan. Butuh 8 nomor halaman dari bidan. |
+
+**Deployment Apps Script sudah sinkron** — repo dan deployment dua-duanya
+`versi: 12`, diverifikasi lewat `?action=ping`. Ini persoalan yang paling
+sering kambuh di proyek ini, jadi setiap perubahan `gas/Code.gs` harus
+diperlakukan sebagai dua langkah: ubah repo, LALU Deploy → Manage deployments
+→ New version.
 
 **Sudah selesai:** kunci jawaban resmi (bukan turunan lagi), video untuk seluruh
 9 topik aktif, hosting video di repo, dan wilayah TTD/MMS yang kini tidak lagi
